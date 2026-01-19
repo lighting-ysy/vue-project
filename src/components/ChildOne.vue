@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { store } from '@/store.js'
-import { useAttrs } from 'vue'
+import { useAttrs, inject } from 'vue'
 import type { PropType } from 'vue' // 必须引入，用于数组复杂类型声明
 
 // ✅ 【核心修复】给props声明严格的TS类型，指定data数组的具体结构
@@ -31,7 +31,7 @@ const props = defineProps({
     default: 10
   }
 })
-
+console.log(inject("message") + ' ' + "world")
 // 声明自定义事件，指定参数类型为number，更严谨
 const emits = defineEmits<{
   (e: 'button-click', val: number): void
@@ -40,6 +40,7 @@ const emits = defineEmits<{
 const fun2 = () => {
   emits('button-click', 10)
   store.fun1()
+  alert('fun2',)
 }
 
 const formData = new URLSearchParams()

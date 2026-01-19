@@ -26,7 +26,7 @@ import Docx from '@/components/Docx.vue'
 import { store } from '@/store.js'
 console.log(store.count)
 const attrs = useAttrs()
-console.log(attrs)
+//console.log(attrs)
 const title = ref('')
 const form = reactive({
   name: '',
@@ -73,35 +73,35 @@ const data1 = ref({
 const data2 = JSON.parse(JSON.stringify(data1.value))
 data2.name = 'Mike'
 data2.nickName[1] = 'Mike2'
-console.log(data1.value)
-console.log(data2)
+//console.log(data1.value)
+//console.log(data2)
 watch(() => title.value, (newValue) => {
-  console.log(newValue)
+  //console.log(newValue)
 })
 watch(() => form.name, (newValue) => {
-  console.log(newValue)
+  //console.log(newValue)
 })
 watchEffect(() => {
-  console.log('data1:', data1.value)
-  console.log('data2:', data2)
-  console.log('title:', title.value)
+  //console.log('data1:', data1.value)
+  //console.log('data2:', data2)
+  //console.log('title:', title.value)
 })
 
 
 const f1 = ref()
 const function1 = (a: any, f: any) => {
-  console.log('f1', a)
+  //console.log('f1', a)
   f1.value = f
   f1.value(a)
 }
 
 const function2 = (a: any) => {
-  console.log('f2', a)
+  //console.log('f2', a)
 }
 function1('hello', function2)
 provide('message', 'hello')
 const instance = getCurrentInstance()
-console.log('instance', instance)
+//console.log('instance', instance)
 </script>
 <style scoped>
 .dashboard-card {
