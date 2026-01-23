@@ -1,6 +1,5 @@
 <template>
     <div>home</div>
-    <el-button type="primary" @click="handleClick"></el-button>
     <div class="container" ref="container"></div>
     <div class="container1" ref="container1"></div>
     <div class="container2" ref="container2"></div>

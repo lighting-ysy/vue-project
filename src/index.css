@@ -1,0 +1,13 @@
+/* 移除 el-input 输入框的边框 */
+.el-input__wrapper {
+  border: none !important;
+  /* 移除焦点时的外边框高亮 */
+  box-shadow: none !important;
+  /* 移除默认的内边距（可选，根据布局需求调整） */
+  padding: 0 !important;
+}
+
+/* 可选：移除禁用状态的边框（如果需要） */
+.el-input__wrapper.is-disabled {
+  border: none !important;
+}
