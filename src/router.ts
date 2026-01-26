@@ -5,6 +5,7 @@ const routes = [
   { path: '/index', component: () => import('@/pages/index.vue') },
   { path: '/pdf', component: () => import('@/pages/pdfExtractor.vue') },
   { path: '/pdfFile', component: () => import('@/pages/pdfFile.vue') },
+  { path: '/fileComponent', component: () => import('@/pages/fileComponent.vue'), meta:{title:"合同填写"} },
   { path: '/projectShow', component: () => import('@/pages/projectShow.vue'), meta:{title:"测试"} }] //工作流
 
 const router = createRouter({

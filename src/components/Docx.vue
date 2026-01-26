@@ -310,7 +310,8 @@
           </div>
         </div>
       </div>
-
+<!---->
+      <div></div>
       <!-- 二、货物要求 -->
       <div class="contract-section mb-6">
         <h3 class="section-title font-bold text-lg mb-4">二、货物要求</h3>
@@ -376,8 +377,7 @@
             <div class="info-row mb-3">
               <span class="section-label inline-block w-36">3.2 支付方式：</span>
               <el-select v-model="paymentMethod" class="inline-select w-32">
-                <el-option label="once">一次性支付</el-option>
-                <el-option label="installment">分期付款</el-option>
+                <el-option v-for="item in paymentMethods" :key="item.value" :label="item.label" :value="item.value"></el-option>
               </el-select>
             </div>
 
@@ -737,12 +737,15 @@ const totalAmountUpper = computed(() => {
 
 // 支付方式
 const paymentMethod = ref('once');
-
+const paymentMethods = [{ label: '一次性付清', value: 'once' }, { label: '分期付款', value: 'installment' }, { label: '其他', value: 'other' }]
 // 付款进度
+const paymentProgress = ref(0);
+const paymentProgressMax = computed(() => {
+  if (paymentMethod.value === 'once') {
+    return 1;}})
 const paymentSchedule = ref([
   { amount: '', date: '', payee: '', note: '', isAdvance: false }
 ]);
-
 // 违约责任
 const breachTerms = ref('8.1 质量瑕疵的违约责任：乙方提供的产品不符合合同约定的质量标准或存在产品质量缺陷，甲方有权要求乙方及时修理、重作、更换，并承担由此给甲方造成的损失。修理、重作、更换的具体要求为：\n8.2 迟延交货的违约责任：乙方未按合同规定时间交货的，甲方有权从货款中扣除误期赔偿费，赔偿费的计算方法为：\n8.3 迟延支付的违约责任：甲方存在迟延支付合同款项的，应当支付逾期付款利息，计算方法为：\n8.4 违法分包、转包的违约责任：乙方将项目转包、违法分包的，甲方可以解除合同，并要求乙方承担如下违约责任：');
 
