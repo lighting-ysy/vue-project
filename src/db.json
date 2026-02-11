@@ -1,9 +1,0 @@
-{
-  "users": [
-    { "id": 1, "name": "张三", "email": "zhangsan@test.com" },
-    { "id": 2, "name": "李四", "email": "lisi@test.com" }
-  ],
-  "posts": [
-    { "id": 1, "title": "测试文章", "author": "张三" }
-  ]
-}

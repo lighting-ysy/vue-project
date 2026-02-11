@@ -234,7 +234,8 @@ const calculatePath = (connection) => {
           L ${midX} ${endY} 
           L ${endX} ${endY}`
 }
-
+const data1 = false || true
+console.log('data1',data1)
 const onNodeClick = (node) => {
   console.log('点击节点:', node.name)
   // 节点点击处理逻辑

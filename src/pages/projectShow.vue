@@ -16,21 +16,21 @@
   </ChildOne>
   <el-button @click="exportPdf">导出PDF</el-button>
   <div id="exportContent">
-    <Docx></Docx> <!-- 这里放置要导出的HTML内容 -->
+    <!-- <Docx></Docx> 这里放置要导出的HTML内容 -->
   </div>
 
   <h1>PDF 预览示例</h1>
-  <PdfFile pdf-url="public/附件2.电子采购合同文本-货物类.pdf" :scale="1.2" />
+
   <Child :data="[{ number: 1, date: '2022-01-01' }, { number: 2, date: '2022-01-02' }]" class="button_3"></Child>
 </template>
 
 <script lang="ts" setup>
-import { getPdf } from './htmlToPdf.js'
+
 import { reactive, ref, watch, useAttrs, watchEffect, provide, getCurrentInstance } from 'vue'
 import ChildOne from '@/components/ChildOne.vue'
 import Child from '@/components/Child.vue'
 import Docx from '@/components/Docx.vue'
-import PdfFile from '@/pages/pdfFile.vue'
+import {getPdf} from './htmlToPdf.js'
 import { store } from '@/store.js'
 console.log(store.count)
 const attrs = useAttrs()
@@ -110,8 +110,9 @@ function1('hello', function2)
 provide('message', 'hello')
 const instance = getCurrentInstance()
 //console.log('instance', instance)
+
 const exportPdf = () => {
-  getPdf('exportContent', '导出的PDF文件')
+  getPdf("exportContent","htmlToPdf")
 }
 </script>
 <style scoped>
