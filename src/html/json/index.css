@@ -1,0 +1,505 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 6px 20px rgba(106, 17, 203, 0.2);
+}
+
+h1 {
+    font-size: 2.8rem;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.main-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.form-section,
+.preview-section {
+    flex: 1;
+    min-width: 300px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.section-title i {
+    color: #6a11cb;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background-color: #6a11cb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #5a0db0;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.btn-secondary:hover {
+    background-color: #e2e8f0;
+}
+
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.fields-container {
+    margin-top: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+/* Apifox风格表格样式 */
+.fields-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.fields-table th {
+    background-color: #f8fafc;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.fields-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+}
+
+.fields-table tr:hover td {
+    background-color: #fafafa;
+}
+
+/* 嵌套层级缩进 */
+.indent-level-0 {
+    padding-left: 0px;
+}
+
+.indent-level-1 {
+    padding-left: 20px;
+}
+
+.indent-level-2 {
+    padding-left: 40px;
+}
+
+.indent-level-3 {
+    padding-left: 60px;
+}
+
+.indent-level-4 {
+    padding-left: 80px;
+}
+
+.indent-level-5 {
+    padding-left: 100px;
+}
+
+/* 表格单元格内容样式 */
+.cell-name {
+    width: 25%;
+}
+
+.cell-type {
+    width: 15%;
+}
+
+.cell-value {
+    width: 40%;
+}
+
+.cell-actions {
+    width: 20%;
+    text-align: right;
+}
+
+/* 表单控件适配表格 */
+.table-form-control {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s;
+}
+
+.table-form-control:focus {
+    outline: none;
+    border-color: #6a11cb;
+    box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.1);
+}
+
+/* 类型标签 */
+.type-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.type-string {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.type-number {
+    background-color: #fdf2f8;
+    color: #9f7aea;
+}
+
+.type-boolean {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.type-null {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.type-object {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.type-array {
+    background-color: #ede9fe;
+    color: #7c3aed;
+}
+
+/* 操作按钮组 */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.action-btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+.btn-add {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-add:hover {
+    background-color: #059669;
+}
+
+.btn-edit {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #2563eb;
+}
+
+.btn-delete {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #dc2626;
+}
+
+.btn-nested {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.btn-nested:hover {
+    background-color: #7c3aed;
+}
+
+/* 嵌套内容容器 */
+.nested-content {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+/* JSON预览样式 */
+.json-preview {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    height: 600px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-top: 10px;
+    white-space: pre-wrap;
+}
+
+.json-key {
+    color: #7dd3fc;
+}
+
+.json-string {
+    color: #bbf7d0;
+}
+
+.json-number {
+    color: #f0abfc;
+}
+
+.json-boolean {
+    color: #fbbf24;
+}
+
+.json-null {
+    color: #f87171;
+}
+
+.json-punctuation {
+    color: #cbd5e1;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.export-btn {
+    background-color: #10b981;
+    color: white;
+}
+
+.export-btn:hover {
+    background-color: #0da271;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #cbd5e1;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background-color: #10b981;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .cell-name {
+        width: 20%;
+    }
+
+    .cell-type {
+        width: 15%;
+    }
+
+    .cell-value {
+        width: 35%;
+    }
+
+    .cell-actions {
+        width: 30%;
+    }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* 布尔值单选框样式 */
+.radio-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 数组项样式 */
+.array-item-editor {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #f8fafc;
+    border-radius: 4px;
+}
+
+.array-item-list {
+    margin-top: 8px;
+}
+
+.array-item-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+/* 数组对象项的子字段编辑区 */
+.array-object-fields {
+    margin-top: 8px;
+    margin-left: 16px;
+    padding-left: 8px;
+    border-left: 2px dashed #cbd5e1;
+}

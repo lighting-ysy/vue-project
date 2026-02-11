@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复杂JSON生成器 - Apifox风格表格版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+    <div class="container">
+        
+        <div class="main-content">
+            <section class="form-section">
+                <h2 class="section-title"><i class="fas fa-edit"></i> 字段管理</h2>
+                
+                <div class="controls">
+                    <button type="button" class="btn btn-primary" id="addField">
+                        <i class="fas fa-plus"></i> 添加字段
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="addObject">
+                        <i class="fas fa-folder-plus"></i> 添加对象
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="addArray">
+                        <i class="fas fa-list"></i> 添加数组
+                    </button>
+                    <button type="button" class="btn btn-danger" id="resetForm">
+                        <i class="fas fa-trash-alt"></i> 重置所有
+                    </button>
+                </div>
+                
+                <div class="fields-container" id="fieldsContainer">
+                    <!-- 空状态 -->
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-file-alt"></i>
+                        <p>暂无字段，点击上方按钮添加字段开始构建JSON</p>
+                    </div>
+                    
+                    <!-- 表格容器 - 动态生成 -->
+                    <table class="fields-table" id="fieldsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th class="cell-name">字段名称</th>
+                                <th class="cell-type">数据类型</th>
+                                <th class="cell-value">字段值</th>
+                                <th class="cell-actions">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fieldsTableBody">
+                            <!-- 动态生成的表格行 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section class="preview-section">
+
+                <div class="json-preview" id="jsonPreview">
+                    <span class="json-punctuation">{</span><span class="json-punctuation">}</span>
+                </div>
+                
+                <div class="actions">
+                    <button type="button" class="btn export-btn" id="copyJson">
+                        <i class="fas fa-copy"></i> 复制JSON
+                    </button>
+                    <button type="button" class="btn export-btn" id="downloadJson">
+                        <i class="fas fa-download"></i> 下载JSON文件
+                    </button>
+                </div>
+            </section>
+        </div>
+        
+    </div>
+    
+    <div class="notification" id="notification">JSON已复制到剪贴板！</div>
+
+</body>
+<script src="./index.js"></script>
+</html>
