@@ -17,6 +17,7 @@
   <el-button @click="exportPdf">导出PDF</el-button>
   <div id="exportContent">
     <!-- <Docx></Docx> 这里放置要导出的HTML内容 -->
+     <span>content</span>
   </div>
 
   <h1>PDF 预览示例</h1>
@@ -29,10 +30,7 @@
 import { reactive, ref, watch, useAttrs, watchEffect, provide, getCurrentInstance } from 'vue'
 import ChildOne from '@/components/ChildOne.vue'
 import Child from '@/components/Child.vue'
-import Docx from '@/components/Docx.vue'
 import {getPdf} from './htmlToPdf.js'
-import { store } from '@/store.js'
-console.log(store.count)
 const attrs = useAttrs()
 //console.log(attrs)
 const title = ref('')

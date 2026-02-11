@@ -51,7 +51,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy} from 'pdfjs-dist';
 
 // 配置 pdfjs worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.530/build/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs';
 // === 类型定义 ===
 // 文件相关
 interface SelectedFile {

@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '@/store.js'
 import { useAttrs, inject } from 'vue'
 import type { PropType } from 'vue' // 必须引入，用于数组复杂类型声明
 
@@ -39,7 +38,6 @@ const emits = defineEmits<{
 
 const fun2 = () => {
   emits('button-click', 10)
-  store.fun1()
   alert('fun2',)
 }
 
