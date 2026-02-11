@@ -1,12 +1,13 @@
 import { createWebHistory, createRouter } from 'vue-router'
-
-const routes = [
-  { path: '/index', component: () => import('@/pages/index.vue') },
-  { path: '/pdf', component: () => import('@/pages/pdfExtractor.vue') },
-  { path: '/test', component: () => import('@/pages/test.vue') },
-  { path: '/css', component: () => import('@/system/cssHighLight/index.vue') },
-  { path: '/projectShow', component: () => import('@/pages/projectShow.vue'), meta:{title:"测试"} }] //工作流
-
+const list:any = import.meta.glob([
+  './pages/**/*.vue'
+])
+const routes:Array<any> = [] //工作流
+Object.keys(list).forEach((key:any) => {
+  const path = key.match(/\.\/(.+)\.vue$/)[1]//0:完整内容;1:捕获组内容
+  const component = list[key]
+  routes.push({ path: '/'+path.split('/')[1], component: component, meta:{title:path.split('/').pop()} })
+})
 const router = createRouter({
   history: createWebHistory(),
   //history: createWebHashHistory(),

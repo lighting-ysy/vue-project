@@ -31,7 +31,7 @@ import { reactive, ref, watch, useAttrs, watchEffect, provide, getCurrentInstanc
 import ChildOne from '@/components/ChildOne.vue'
 import Child from '@/components/Child.vue'
 import {getPdf} from './htmlToPdf.js'
-const attrs = useAttrs()
+const attrs = useAttrs()//除去props外的其他参数
 //console.log(attrs)
 const title = ref('')
 const form = reactive({

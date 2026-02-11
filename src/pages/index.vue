@@ -1,5 +1,5 @@
 <template>
-  <div>{{ store.count }}</div>
+
   <div class="flowchart-container">
     <svg :width="width" :height="height" class="svg-flowchart">
       <!-- 连接线 -->
@@ -102,8 +102,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import {store} from '../store'
-console.log(store.count)
+
 const width = 1200
 const height = 600
 const nodeRadius = 25  // 减小圆形半径
