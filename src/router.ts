@@ -1,7 +1,8 @@
 import { createWebHistory, createRouter } from 'vue-router'
 const list:any = import.meta.glob([
-  './login/**/*.vue','./pages/**/*.vue',
-  
+  './login/**/*.vue',
+  './pages/**/*.vue',
+  './system/**/*.vue'
 ])
 const routes:Array<any> = [] //工作流
 Object.keys(list).forEach((key:any) => {
