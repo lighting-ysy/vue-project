@@ -20,14 +20,13 @@
      <span>content</span>
   </div>
 
-  <h1>PDF 预览示例</h1>
-
   <Child :data="[{ number: 1, date: '2022-01-01' }, { number: 2, date: '2022-01-02' }]" class="button_3"></Child>
+  <div>{{ datax }}</div>
 </template>
 
 <script lang="ts" setup>
 
-import { reactive, ref, watch, useAttrs, watchEffect, provide, getCurrentInstance } from 'vue'
+import { reactive, ref, watch, useAttrs, watchEffect, provide, getCurrentInstance,onMounted } from 'vue'
 import ChildOne from '@/components/ChildOne.vue'
 import Child from '@/components/Child.vue'
 import {getPdf} from './htmlToPdf.js'
@@ -37,6 +36,27 @@ const title = ref('')
 const form = reactive({
   name: '',
 })
+const datax = ref(0)
+let timer:any = null // 存储定时器标识，用于清除
+
+function countNum() {
+  // 重置计数器（避免重复调用时数值叠加）
+  datax.value = 0
+  // 先清除可能存在的旧定时器，防止多个定时器同时运行
+  if (timer) clearInterval(timer)
+  
+  let count = 0 // 记录已递增的次数
+  // 每1秒执行一次
+  timer = setInterval(() => {
+    datax.value++
+    count++
+    // 达到3600次时清除定时器，停止递增
+    if (count >= 3600) {
+      clearInterval(timer)
+      timer = null // 清空标识
+    }
+  }, 1000)
+}
 //直接赋值
 // const data1 = ref({
 //   name: 'John',
@@ -112,6 +132,9 @@ const instance = getCurrentInstance()
 const exportPdf = () => {
   getPdf("exportContent","htmlToPdf")
 }
+onMounted(() => {
+  countNum()
+})
 </script>
 <style scoped>
 .dashboard-card {

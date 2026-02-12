@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 const list:any = import.meta.glob([
-  './pages/**/*.vue'
+  './login/**/*.vue','./pages/**/*.vue',
+  
 ])
 const routes:Array<any> = [] //工作流
 Object.keys(list).forEach((key:any) => {
@@ -8,6 +9,7 @@ Object.keys(list).forEach((key:any) => {
   const component = list[key]
   routes.push({ path: '/'+path.split('/')[1], component: component, meta:{title:path.split('/').pop()} })
 })
+console.log(routes)
 const router = createRouter({
   history: createWebHistory(),
   //history: createWebHashHistory(),

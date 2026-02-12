@@ -48,7 +48,7 @@ export function getPdf(elementId, pdfName) {
             while (leftHeight > 0) {
                 // 绘制当前页的内容
                 pdf.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight);
-                // 🔥 关键修复：直接使用固定坐标20,20，每个新页面都在左上角显示时间
+                // 关键修复：直接使用固定坐标20,20，每个新页面都在左上角显示时间
                 // 在 pdf.text() 前添加以下代码
                 pdf.setFontSize(8); // 字体大小
 
