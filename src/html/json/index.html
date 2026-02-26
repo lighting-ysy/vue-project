@@ -9,41 +9,44 @@
 </head>
 <body>
     <div class="container">
+        <header>
+            <h1>JSON 生成器</h1>
+            <p class="subtitle">快速构建并生成复杂的 JSON 数据结构</p>
+        </header>
         
         <div class="main-content">
             <section class="form-section">
-                <h2 class="section-title"><i class="fas fa-edit"></i> 字段管理</h2>
+                <h2 class="section-title">字段配置</h2>
                 
                 <div class="controls">
                     <button type="button" class="btn btn-primary" id="addField">
                         <i class="fas fa-plus"></i> 添加字段
                     </button>
                     <button type="button" class="btn btn-secondary" id="addObject">
-                        <i class="fas fa-folder-plus"></i> 添加对象
+                        <i class="fas fa-folder"></i> 添加对象
                     </button>
                     <button type="button" class="btn btn-secondary" id="addArray">
-                        <i class="fas fa-list"></i> 添加数组
+                        <i class="fas fa-list-ul"></i> 添加数组
                     </button>
                     <button type="button" class="btn btn-danger" id="resetForm">
-                        <i class="fas fa-trash-alt"></i> 重置所有
+                        <i class="fas fa-undo"></i> 重置
                     </button>
                 </div>
                 
                 <div class="fields-container" id="fieldsContainer">
                     <!-- 空状态 -->
                     <div class="empty-state" id="emptyState">
-                        <i class="fas fa-file-alt"></i>
-                        <p>暂无字段，点击上方按钮添加字段开始构建JSON</p>
+                        <p>点击上方按钮开始构建</p>
                     </div>
                     
                     <!-- 表格容器 - 动态生成 -->
                     <table class="fields-table" id="fieldsTable" style="display: none;">
                         <thead>
                             <tr>
-                                <th class="cell-name">字段名称</th>
-                                <th class="cell-type">数据类型</th>
-                                <th class="cell-value">字段值</th>
-                                <th class="cell-actions">操作</th>
+                                <th class="cell-name">名称</th>
+                                <th class="cell-type">类型</th>
+                                <th class="cell-value">内容</th>
+                                <th class="cell-actions"></th>
                             </tr>
                         </thead>
                         <tbody id="fieldsTableBody">
@@ -54,6 +57,7 @@
             </section>
             
             <section class="preview-section">
+                <h2 class="section-title">JSON 预览</h2>
 
                 <div class="json-preview" id="jsonPreview">
                     <span class="json-punctuation">{</span><span class="json-punctuation">}</span>
@@ -61,18 +65,17 @@
                 
                 <div class="actions">
                     <button type="button" class="btn export-btn" id="copyJson">
-                        <i class="fas fa-copy"></i> 复制JSON
+                        <i class="fas fa-copy"></i> 复制
                     </button>
                     <button type="button" class="btn export-btn" id="downloadJson">
-                        <i class="fas fa-download"></i> 下载JSON文件
+                        <i class="fas fa-download"></i> 下载
                     </button>
                 </div>
             </section>
         </div>
-        
     </div>
     
-    <div class="notification" id="notification">JSON已复制到剪贴板！</div>
+    <div class="notification" id="notification">已复制到剪贴板</div>
 
 </body>
 <script src="./index.js"></script>

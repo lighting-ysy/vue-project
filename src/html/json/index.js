@@ -601,8 +601,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (item.type === 'object') {
                     const addFieldBtn = document.createElement('button');
                     addFieldBtn.className = 'action-btn btn-nested action-btn-sm';
-                    addFieldBtn.innerHTML = '<i class="fas fa-plus"></i> 字段';
-                    addFieldBtn.title = '添加对象字段';
+                    addFieldBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                    addFieldBtn.title = '添加字段';
                     addFieldBtn.addEventListener('click', function () {
                         addFieldToArrayObject(field.id, item.id);
                     });
@@ -617,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         fieldData.arrayObjectFields[key].forEach(objField => {
                             const objFieldRow = document.createElement('div');
                             objFieldRow.style.display = 'flex';
-                            objFieldRow.style.gap = '8px';
+                            objFieldRow.style.gap = '6px';
                             objFieldRow.style.marginTop = '4px';
 
                             const objFieldName = document.createElement('input');
@@ -723,8 +723,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (field.type === 'object' && !field.arrayObjectKey) {
             const addChildBtn = document.createElement('button');
             addChildBtn.className = 'action-btn btn-nested action-btn-sm';
-            addChildBtn.innerHTML = '<i class="fas fa-plus"></i> 子字段';
-            addChildBtn.title = '添加子字段';
+            addChildBtn.innerHTML = '<i class="fas fa-plus"></i> 字段';
+            addChildBtn.title = '添加字段';
             addChildBtn.addEventListener('click', function () {
                 addField('string', field.id, field.nestedLevel + 1);
             });
@@ -732,8 +732,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const addChildObjBtn = document.createElement('button');
             addChildObjBtn.className = 'action-btn btn-nested action-btn-sm';
-            addChildObjBtn.innerHTML = '<i class="fas fa-folder-plus"></i> 子对象';
-            addChildObjBtn.title = '添加子对象';
+            addChildObjBtn.innerHTML = '<i class="fas fa-folder"></i> 对象';
+            addChildObjBtn.title = '添加对象';
             addChildObjBtn.addEventListener('click', function () {
                 addField('object', field.id, field.nestedLevel + 1);
             });
@@ -741,8 +741,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const addChildArrayBtn = document.createElement('button');
             addChildArrayBtn.className = 'action-btn btn-nested action-btn-sm';
-            addChildArrayBtn.innerHTML = '<i class="fas fa-list"></i> 子数组';
-            addChildArrayBtn.title = '添加子数组';
+            addChildArrayBtn.innerHTML = '<i class="fas fa-list-ul"></i> 数组';
+            addChildArrayBtn.title = '添加数组';
             addChildArrayBtn.addEventListener('click', function () {
                 addField('array', field.id, field.nestedLevel + 1);
             });
@@ -753,8 +753,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (field.type === 'array') {
             const addItemBtn = document.createElement('button');
             addItemBtn.className = 'action-btn btn-add action-btn-sm';
-            addItemBtn.innerHTML = '<i class="fas fa-plus"></i> 数组项';
-            addItemBtn.title = '添加数组项';
+            addItemBtn.innerHTML = '<i class="fas fa-plus"></i> 项';
+            addItemBtn.title = '添加项';
             addItemBtn.addEventListener('click', function () {
                 addArrayItem(field.id);
             });
@@ -764,8 +764,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // 删除按钮
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'action-btn btn-delete action-btn-sm';
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
-        deleteBtn.title = '删除此字段';
+        deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        deleteBtn.title = '删除';
         deleteBtn.addEventListener('click', function () {
             if (confirm(`确定要删除字段 "${field.name}" 吗？`)) {
                 deleteField(field.id, field.arrayObjectKey);
@@ -836,31 +836,34 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'null':
                 const nullText = document.createElement('span');
                 nullText.textContent = 'null';
-                nullText.style.color = '#ef4444';
+                nullText.className = 'type-badge type-null';
                 container.appendChild(nullText);
                 break;
 
             case 'object':
                 const objectText = document.createElement('span');
-                objectText.textContent = '嵌套对象';
-                objectText.style.color = '#16a34a';
+                objectText.textContent = '{}';
+                objectText.className = 'type-badge type-object';
                 container.appendChild(objectText);
                 break;
 
             case 'array':
                 const arrayContainer = document.createElement('div');
+                arrayContainer.style.display = 'flex';
+                arrayContainer.style.alignItems = 'center';
+                arrayContainer.style.gap = '8px';
 
                 const arrayText = document.createElement('span');
-                arrayText.textContent = `数组 (${field.arrayItems.length} 项)`;
-                arrayText.style.color = '#7c3aed';
+                arrayText.textContent = `[] (${field.arrayItems.length})`;
+                arrayText.className = 'type-badge type-array';
                 arrayContainer.appendChild(arrayText);
 
                 // 添加数组项按钮
                 if (field.arrayItems.length === 0) {
                     const addItemBtn = document.createElement('button');
                     addItemBtn.className = 'action-btn btn-add action-btn-sm';
-                    addItemBtn.style.marginLeft = '8px';
-                    addItemBtn.innerHTML = '<i class="fas fa-plus"></i> 添加项';
+                    addItemBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                    addItemBtn.title = '添加项';
                     addItemBtn.addEventListener('click', function () {
                         addArrayItem(field.id);
                     });
@@ -924,21 +927,21 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'null':
                 const nullText = document.createElement('span');
                 nullText.textContent = 'null';
-                nullText.style.color = '#ef4444';
+                nullText.className = 'type-badge type-null';
                 container.appendChild(nullText);
                 break;
 
             case 'object':
                 const objectText = document.createElement('span');
-                objectText.textContent = '对象';
-                objectText.style.color = '#16a34a';
+                objectText.textContent = '{}';
+                objectText.className = 'type-badge type-object';
                 container.appendChild(objectText);
                 break;
 
             case 'array':
                 const arrayText = document.createElement('span');
-                arrayText.textContent = '数组';
-                arrayText.style.color = '#7c3aed';
+                arrayText.textContent = '[]';
+                arrayText.className = 'type-badge type-array';
                 container.appendChild(arrayText);
                 break;
         }
