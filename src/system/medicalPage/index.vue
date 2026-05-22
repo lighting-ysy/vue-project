@@ -7,7 +7,7 @@
 
     <!-- 中部：自适应宽度 -->
     <div class="layout-center">
-      <MedicalRecordForm  :registerId="registerId" />
+      <MedicalRecordForm  :patientInfo="patientInfo" />
     </div>
 
     <!-- 右侧：固定宽度 -->
@@ -27,8 +27,9 @@ import axios from 'axios'
 import { onMounted,ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore.js' // 引入刚才创建的 Store
+import { pa } from 'element-plus/es/locales.mjs'
 const router = useRouter()
-const registerId = ref('')
+const patientInfo = ref('')
 
 const fileStore = useFileStore()
 
@@ -58,9 +59,9 @@ const handleAiAction = (actionType) => {
     showButton.value = 'treatmentRecommendation'
   }
 }
-const handlePatientSelect = (id) => {
-  console.log('切换到患者ID:', id)
-  registerId.value = id
+const handlePatientSelect = (patient) => {
+  console.log('切换到患者ID:', patient.registerId)
+  patientInfo.value = patient
   // 这里可以添加加载患者数据的逻辑
 }
 //http://portal.it.sunsheen.cn/cwaiads/service/api/doctor/selectDoctorDepartment?doctorId=40001

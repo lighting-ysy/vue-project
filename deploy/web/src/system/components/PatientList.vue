@@ -15,11 +15,12 @@
         </template>
       </el-input>
       <!-- 新增患者按钮 -->
-      <el-button size="small" :icon="Plus" style="margin-left: 5px;" @click="openAddDialog" />
-      <el-button size="small" :icon="Download" style="margin-left: 5px;" @click="triggerFileSelect" />
+      <el-button size="small" :icon="Plus" style="margin-left: 5px;" @click="openAddDialog" title="新增患者" />
+      <el-button size="small" :icon="Download" style="margin-left: 5px;" @click="triggerFileSelect" title="添加病例"/>
     </div>
 
     <!-- 隐藏的 input 标签，用于唤起系统文件选择器 -->
+    <!-- 注意：accept 属性建议补充 .doc,.txt 等完整类型 -->
     <input 
       ref="fileInputRef" 
       type="file" 
@@ -31,11 +32,11 @@
     <!-- 患者列表 -->
     <div class="patient-list">
       <div
-        v-for="patient in filteredPatients"
+        v-for="patient in patients"
         :key="patient.patientId"
         class="patient-card"
         :class="{ active: activeId === patient.registerId }"
-        @click="selectPatient(patient.registerId)"
+        @click="selectPatient(patient)"
       >
         <span class="name">{{ patient.patientName }}</span>
         <span class="gender" :class="{ female: patient.patientGender === '女' }">
@@ -48,16 +49,18 @@
     <div class="pagination-box">
       <el-pagination
         background
-        layout="prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
         :total="total"
         :page-size="pageSize"
         :current-page="currentPage"
+        :page-sizes="[10, 20, 50, 100]"
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
         small
       />
     </div>
 
-    <!-- 新增患者弹窗 (保持不变...) -->
+    <!-- 新增患者弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       title="新增患者"
@@ -89,13 +92,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Search, Download, Plus } from '@element-plus/icons-vue'
-import { onMounted } from 'vue'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-const patients = ref([])
+// 1. 响应式数据定义
+const patients = ref([]) // 存储当前页的患者列表
 const searchQuery = ref('')
 const activeId = ref('')
 const fileInputRef = ref(null)
@@ -115,16 +118,64 @@ const newPatientForm = ref({
 
 const emit = defineEmits(['select', 'file-selected'])
 
+// 2. 分页与搜索逻辑 (核心补全部分)
+
+// 补全：处理每页条数变化
+const handleSizeChange = (newSize) => {
+  pageSize.value = newSize
+  // 改变每页条数后，通常需要回到第一页重新查询
+  currentPage.value = 1 
+  fetchData()
+}
+
+// 补全：处理当前页码变化
+const handlePageChange = (page) => {
+  currentPage.value = page
+  fetchData()
+}
+
+// 修正：搜索逻辑，点击确认或回车触发
 const handleSearch = () => {
-  console.log('搜索:', searchQuery.value)
-  // 搜索时通常应该重置到第一页并重新请求
+  // 搜索时重置到第一页
   currentPage.value = 1
   fetchData()
 }
 
-const selectPatient = (id) => {
-  activeId.value = id
-  emit('select', id)
+// 3. 数据请求逻辑 (核心修正：带上分页和搜索参数)
+const fetchData = async () => {
+  const url = '/api/v1/register/selectCaseList'
+  
+  // 构建请求参数
+  const params = {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value
+  }
+  
+  // 如果有搜索关键词，加入参数
+  if (searchQuery.value.trim()) {
+    params.patientName = searchQuery.value.trim()
+  }
+
+  try {
+    const res = await axios.get(url, { params })
+    console.log('✅ 获取病例列表数据成功:', res.data)
+    
+    const data = res.data.data || {}
+    // 假设后端返回的数据结构是 { registerList: [], total: 100 }
+    patients.value = data.registerList || []
+    total.value = data.total || 0
+  } catch (err) {
+    console.error('❌ 请求失败:', err)
+    ElMessage.error('数据加载失败')
+  }
+}
+
+// 4. 其他交互逻辑
+
+// 选择患者
+const selectPatient = (patient) => {
+  activeId.value = patient.registerId
+  emit('select', patient)
 }
 
 // 打开新增弹窗
@@ -134,36 +185,33 @@ const openAddDialog = () => {
 }
 
 // 提交新增患者
-const submitNewPatient = () => {
+const submitNewPatient = async () => {
   if (!newPatientForm.value.patientName.trim()) {
     ElMessage.warning('请输入患者姓名')
     return
   }
 
-  axios.post('/fuo-aiads/register/createRegistedPatient', { data: newPatientForm.value })
-    .then((res) => {
-      console.log('✅ 新增患者成功:', res.data)
-      // 新增成功后，建议刷新当前列表，或者将新数据插入到列表顶部
-      // 这里采用重新请求第一页的方式，保证数据绝对同步
-      currentPage.value = 1
-      fetchData()
-      
-      ElMessage.success('新增患者成功')
-      dialogVisible.value = false
+  try {
+    const res = await axios.post('/api/v1/register/createRegistedPatient', { 
+      data: newPatientForm.value 
     })
-    .catch((err) => {
-      console.error('❌ 请求失败:', err)
-    })
+    
+    console.log('✅ 新增患者成功:', res.data)
+    ElMessage.success('新增患者成功')
+    dialogVisible.value = false
+    
+    // 新增成功后，刷新列表 (保持当前页码，除非是搜索状态，否则可能需要重置到第一页)
+    // 通常建议重置到第一页以查看最新数据
+    currentPage.value = 1
+    fetchData()
+  } catch (err) {
+    console.error('❌ 新增失败:', err)
+  }
 }
 
-// 处理页码变化
-const handlePageChange = (page) => {
-  currentPage.value = page
-  fetchData()
-}
-
+// 文件导入逻辑
 const triggerFileSelect = () => {
-  fileInputRef.value.click()
+  fileInputRef.value?.click()
 }
 
 const handleFileChange = (event) => {
@@ -171,41 +219,19 @@ const handleFileChange = (event) => {
   if (file) {
     console.log('选中的文件：', file.name)
     emit('file-selected', file)
+    // 清空 input 的 value，以便可以选择同一个文件
     event.target.value = ''
   }
 }
 
-// 配合搜索框过滤当前页的数据
-const filteredPatients = computed(() => {
-  return patients.value.filter((p) =>
-    p.patientName.includes(searchQuery.value)
-  )
-})
-
-// 获取病例列表数据（后端分页）
-const fetchData = () => {
-  const url = '/fuo-aiads/register/selectCaseList';
-  axios.get(url, {
-    params: {
-      pageSize: pageSize.value,
-      pageNum: currentPage.value
-    }
-  }).then((res) => {
-    console.log('✅ 获取病例列表数据成功:', res.data);
-    // 假设后端返回的数据结构是 res.data.data.registerList，总条数是 res.data.data.total
-    patients.value = res.data.data.registerList || []
-    total.value = res.data.data.total || 0 
-  }).catch((err) => {
-    console.error('❌ 请求失败:', err);
-  });
-};
-
+// 页面加载时获取数据
 onMounted(() => {
   fetchData()
 })
 </script>
 
 <style scoped>
+/* 保持原有样式不变 */
 .left-panel {
   padding: 15px;
   background-color: #fff;
@@ -229,10 +255,9 @@ onMounted(() => {
 .patient-list {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 10px; /* 给分页条留出一点间距 */
+  margin-bottom: 10px;
 }
 
-/* 分页条样式 */
 .pagination-box {
   display: flex;
   justify-content: center;

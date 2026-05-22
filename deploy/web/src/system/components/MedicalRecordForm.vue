@@ -7,23 +7,12 @@
     </div>
 
     <!-- 病历表单 -->
-    <el-form 
-      :model="formData" 
-      label-width="120px" 
-      label-position="left"
-      class="record-form"
-      size="small"
-    >
+    <el-form :model="formData" label-width="120px" label-position="left" class="record-form" size="small">
       <el-row :gutter="20">
         <el-col :span="24" v-for="(item, index) in formItems" :key="index">
           <!-- 普通单行/多行文本输入 -->
           <el-form-item :label="item.label" v-if="item.type === 'input'">
-            <el-input 
-              v-model="formData[item.prop]" 
-              type="textarea" 
-              :rows="1" 
-              :placeholder="`请输入${item.label}`"
-            />
+            <el-input v-model="formData[item.prop]" type="textarea" :rows="1" :placeholder="`请输入${item.label}`" />
           </el-form-item>
 
           <!-- 单一下拉框 -->
@@ -38,13 +27,16 @@
           <el-form-item :label="item.label" v-else-if="item.type === 'multi-select'">
             <div class="multi-inputs">
               <el-select v-model="formData[item.prop1]" placeholder="病因类型" style="flex: 1">
-                <el-option label="外感" value="外感" />
-                <el-option label="内伤" value="内伤" />
+                <el-option label="感染性疾病" value="感染性疾病" />
+                <el-option label="非感染性炎症性疾病" value="非感染性炎症性疾病" />
+                <el-option label="肿瘤性疾病" value="肿瘤性疾病" />
+                <el-option label="其他疾病" value="其他疾病" />
               </el-select>
-              <el-select v-model="formData[item.prop2]" placeholder="明确诊断" style="flex: 1">
+              <!-- <el-select v-model="formData[item.prop2]" placeholder="明确诊断" style="flex: 1">
                 <el-option label="感冒" value="感冒" />
                 <el-option label="咳嗽" value="咳嗽" />
-              </el-select>
+              </el-select> -->
+              <el-input v-model="formData[item.prop2]"  placeholder="明确诊断"  style="flex: 1" />
             </div>
           </el-form-item>
         </el-col>
@@ -54,18 +46,18 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, watch, ref } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps({
-  registerId: {
-    type: String,
-    default: ''
+  patientInfo: {
+    type: Object,
+    default: {}
   }
 })
 
-// 1. 定义表单配置（字段名、标签、类型）
+// ... formItems 和 formData 的定义保持不变 ...
 const formItems = [
   { label: '主诉', prop: 'caseChief', type: 'input' },
   { label: '现病史', prop: 'casePresent', type: 'input' },
@@ -80,7 +72,6 @@ const formItems = [
   { label: '治疗方案', prop: 'caseTreatment', type: 'input' }
 ]
 
-// 2. 定义表单绑定的数据对象
 const formData = reactive({
   caseChief: '',
   casePresent: '',
@@ -96,17 +87,19 @@ const formData = reactive({
   caseTreatment: ''
 })
 
-// 3. 获取病例详情的方法
+// 定义表单引用，用于校验
+const recordFormRef = ref(null)
+
+// 1. 获取病例详情的方法
 const fetchData = (id) => {
   if (!id) return
+  const url = '/api/v1/register/selectCase'
   
-  const url = '/fuo-aiads/register/selectCase'
-  
-  axios.get(url, {
-    params: { registerId: id }
-  }).then((res) => {
-    const data = res.data.data 
-    
+  // 模拟请求（实际使用时请替换为你的真实 axios.get）
+  axios.get(url, { params: { registerId: id } }).then((res) => {
+    // 这里假设 res.data 是你提供的 data 对象
+    const data = res.data.data || {} 
+
     // 基础文本字段直接赋值
     formData.caseChief = data.caseChief || ''
     formData.casePresent = data.casePresent || ''
@@ -118,7 +111,7 @@ const fetchData = (id) => {
     formData.caseDiseaseType = data.caseDiseaseType || ''
     formData.caseDiagnostic = data.caseDiagnostic || ''
 
-    // 数组类型数据转换为字符串展示
+    // 数组转字符串的辅助函数
     const formatExamArray = (arr) => {
       if (!arr || arr.length === 0) return ''
       return arr.map(item => {
@@ -136,23 +129,152 @@ const fetchData = (id) => {
   })
 }
 
+// 2. 字符串解析回数组的辅助函数（核心新增逻辑）
+const parseExamString = (str) => {
+  if (!str || str.trim() === '') return []
+  
+  return str.split(' | ').map(itemStr => {
+    // 匹配格式：名称: 数值单位 (例如 "身高: 176cm")
+    // 使用正则提取：冒号前是 itemName，冒号后是数值和单位
+    const match = itemStr.match(/^([^:]+):\s*(.+)$/)
+    if (match) {
+      const itemName = match[1].trim()
+      const valueAndUnit = match[2].trim()
+      
+      // 简单提取单位：匹配末尾的字母或特殊单位符号，剩下的作为数值
+      // 如果没有字母结尾，则整个作为数值，单位为空
+      const unitMatch = valueAndUnit.match(/^(.+?)([a-zA-Z\/%]+)$/)
+      
+      if (unitMatch) {
+        return {
+          itemName: itemName,
+          itemValue: unitMatch[1].trim(),
+          itemUnit: unitMatch[2],
+          itemId: "",
+          itemExamId: ""
+        }
+      } else {
+        return {
+          itemName: itemName,
+          itemValue: valueAndUnit,
+          itemUnit: "",
+          itemId: "",
+          itemExamId: ""
+        }
+      }
+    }
+    // 如果格式不匹配，返回空对象或做容错处理
+    return { itemName: itemStr, itemValue: "", itemUnit: "", itemId: "", itemExamId: "" }
+  })
+}
+// const parseExamString = (str) => {
+//   if (!str || str.trim() === '') return []
+
+//   return str.split(' | ').map(itemStr => {
+//     const match = itemStr.match(/^([^:]+):\s*(.+)$/)
+//     if (match) {
+//       const itemName = match[1].trim()
+//       const valueAndUnit = match[2].trim()
+
+//       const unitMatch = valueAndUnit.match(/^(.+?)([a-zA-Z\/%]+)$/)
+
+//       if (unitMatch) {
+//         return {
+//           itemName: itemName,
+//           itemValue: unitMatch[1].trim(),
+//           itemUnit: unitMatch[2],
+//           itemId: "",
+//           itemExamId: ""
+//         }
+//       } else {
+//         return {
+//           itemName: itemName,
+//           itemValue: valueAndUnit,
+//           itemUnit: "",
+//           itemId: "",
+//           itemExamId: ""
+//         }
+//       }
+//     }
+//     // 这里修复：之前 itemStr 直接用，变量名冲突
+//     return { 
+//       itemName: itemStr.trim(), 
+//       itemValue: "", 
+//       itemUnit: "", 
+//       itemId: "", 
+//       itemExamId: "" 
+//     }
+//   })
+// }
+// 3. 改造后的 handleSave 方法
+const handleSave = () => {
+  if (!props.patientInfo.registerId) {
+    ElMessage.warning('缺少患者登记ID，无法保存')
+    return
+  }
+  console.log('开始保存')
+  // 将前端展示用的字符串，转换回后端需要的对象数组
+  const submitData = {
+    registerId: props.patientInfo.registerId, // 带上主键ID用于后端更新
+    caseId:props.patientInfo.caseId, // 带上病历ID用于后端更新
+    patientId: props.patientInfo.patientId,
+    caseChief: formData.caseChief,
+    casePresent: formData.casePresent,
+    casePast: formData.casePast,
+    caseFamily: formData.caseFamily,
+    caseAllergy: formData.caseAllergy,
+    casePerson: formData.casePerson,
+    caseDiseaseType: formData.caseDiseaseType,
+    caseDiagnostic: formData.caseDiagnostic,
+    caseTreatment: formData.caseTreatment,
+    // 调用解析函数，将 "身高: 176cm" 还原为 [{ itemName: '身高', itemValue: '176', itemUnit: 'cm' }]
+    casePhysicalExam: parseExamString(formData.casePhysicalExam).length > 0 ? parseExamString(formData.casePhysicalExam) : null,
+    caseNormalExam: parseExamString(formData.caseNormalExam).length > 0 ? parseExamString(formData.caseNormalExam) : null,
+    caseSpecificExam: parseExamString(formData.caseSpecificExam).length > 0 ? parseExamString(formData.caseSpecificExam) : null,
+    caseOther: null,
+    patientName:props.patientInfo.patientName,
+    patientGender:props.patientInfo.patientGender,
+    patientAge:props.patientInfo.patientAge || null,
+    patientCareer:props.patientInfo.patientCareer || null,
+    patientAddress:props.patientInfo.patientAddress || null,
+  }
+
+  console.log('💾 准备提交给后端的数据：', submitData)
+
+  // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
+  axios.post('/api/v1/register/updateCase', {data:submitData}).then((res) => {
+    console.log('💾 保存成功', res.data)
+    ElMessage.success('保存成功')
+  }).catch((err) => {
+    console.error('❌ 保存失败:', err)
+    ElMessage.error('保存失败，请检查网络或联系管理员')
+  })
+}
+
+const handleDelete = () => {
+  // ... 删除逻辑保持不变 ...
+  if (!props.patientInfo.registerId) {
+    ElMessage.warning('请先选择患者')
+    return
+  }
+  axios.get('/api/v1/register/deleteRegisterLogically', {
+    params: { registerId: props.patientInfo.registerId }
+  }).then((res) => {
+    console.log('删除成功', res.data)
+    ElMessage.success('删除成功')
+  }).catch((err) => {
+    console.error('❌ 删除失败:', err)
+  })
+}
+
 // 监听 registerId 的变化
 watch(
-  () => props.registerId,
+  () => props.patientInfo.registerId,
   (newId) => {
     fetchData(newId)
   },
   { immediate: true }
 )
-
-const handleSave = () => {
-  console.log('保存的数据：', formData)
-  ElMessage.success('保存成功')
-}
-
-const handleDelete = () => {
-  ElMessage.warning('点击了删除')
-}
 </script>
 
 <style scoped>
@@ -186,14 +308,16 @@ const handleDelete = () => {
 :deep(.el-form-item__label) {
   font-weight: bold;
   color: #333;
-  background-color: #f8f9fa; /* 保留灰色背景 */
+  background-color: #f8f9fa;
+  /* 保留灰色背景 */
   padding: 0 12px;
   line-height: 32px;
   /* border: 1px solid #dcdfe6;  <-- 去掉边框，防止文字溢出 */
   /* width: 120px !important;   <-- 去掉固定宽度，让宽度跟随文字自适应 */
   border-radius: 4px 0 0 4px;
   box-sizing: border-box;
-  white-space: nowrap; /* 强制文字不换行 */
+  white-space: nowrap;
+  /* 强制文字不换行 */
 }
 
 /* 调整右侧 input/select 的边框 */
@@ -201,7 +325,7 @@ const handleDelete = () => {
   margin-left: 0 !important;
 }
 
-:deep(.el-input__wrapper), 
+:deep(.el-input__wrapper),
 :deep(.el-select .el-input__wrapper) {
   border-radius: 0 4px 4px 0;
   box-shadow: none;

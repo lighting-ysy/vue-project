@@ -28,8 +28,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/cwaiads\/service\/api/, '')
       },
       '/api/v1/': {
-        target: 'http://portal.it.sunsheen.cn/api/v1/',
-        //target: 'http://192.168.8.10:8000/api/v1/',
+        //target: 'http://portal.it.sunsheen.cn/api/v1/',
+        target: 'http://192.168.8.10:8000/api/v1/',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/v1/, '')
       },

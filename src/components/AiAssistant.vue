@@ -24,39 +24,18 @@
 
       <!-- 功能项 1 -->
       <div class="func-item">
-        <div class="func-info">
-          <el-icon><Brain /></el-icon>
-          <div class="text">
-            <div class="title">中医四诊辅助</div>
-            <div class="desc">舌苔、脉象智能分析</div>
-          </div>
-        </div>
+        
         <el-button type="primary" size="small" round @click="handleFuncClick('auxiliaryDiagnosis')">辅助诊断</el-button>
       </div>
 
       <!-- 功能项 2 -->
       <div class="func-item">
-        <div class="func-info">
-          <el-icon><Food /></el-icon>
-          <div class="text">
-            <div class="title">智能处方推荐</div>
-            <div class="desc">中西医结合用药</div>
-          </div>
-        </div>
+        
         <el-button type="primary" size="small" round @click="handleFuncClick('treatmentRecommendation')">治疗建议与用药推荐</el-button>
       </div>
 
       <!-- 功能项 3 -->
-      <div class="func-item">
-        <div class="func-info">
-          <el-icon><Microscope /></el-icon>
-          <div class="text">
-            <div class="title">辅助检查分析</div>
-            <div class="desc">检验结果智能解读</div>
-          </div>
-        </div>
-        <el-button type="info" size="small" text>></el-button>
-      </div>
+      
     </div>
   </div>
 </template>
