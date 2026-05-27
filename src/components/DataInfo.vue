@@ -9,60 +9,53 @@
       clearable
     />
 
+    <!-- 核心修改：改成可取消选中的单选组 -->
     <el-radio-group v-model="gender" class="gender-group">
-      <el-radio :label="1" border>男</el-radio>
-      <el-radio :label="0" border>女</el-radio>
+      <el-radio :label="1" border @click.native.prevent="handleGenderClick(1)">男</el-radio>
+      <el-radio :label="0" border @click.native.prevent="handleGenderClick(0)">女</el-radio>
     </el-radio-group>
-<!-- <el-button
-        type="primary"
-        :icon="Plus"
-        circle
-        size="small"
-        @click="addItem"
-        class="add-btn"
-      /> -->
+
     <div class="filter-row">
       <div
-      v-for="(item, index) in localList"
-      :key="index"
-      class="rule-item-wrapper"
-    >
-      <div class="rule-builder">
-        <!-- 第一行：指标 + 运算符 -->
-        <div class="row">
-          <el-select v-model="item.metric" placeholder="请选择" style="width: 100%">
-            <el-option
-              v-for="opt in metricOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
+        v-for="(item, index) in localList"
+        :key="index"
+        class="rule-item-wrapper"
+      >
+        <div class="rule-builder">
+          <!-- 第一行：指标 + 运算符 -->
+          <div class="row">
+            <el-select v-model="item.metric" placeholder="请选择" style="width: 100%">
+              <el-option
+                v-for="opt in metricOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
 
-          <el-select v-model="item.ageType" placeholder="=" style="width: 100%">
-            <el-option
-              v-for="opt in operatorOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
-        </div>
+            <el-select v-model="item.ageType" placeholder="=" style="width: 100%">
+              <el-option
+                v-for="opt in operatorOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </div>
 
-        <!-- 第二行：数值1 + 数值2 -->
-        <div class="row">
-          <el-input v-model="item.ageValue1" placeholder="数值1" />
-          <el-input v-model="item.ageValue2" placeholder="数值2" />
+          <!-- 第二行：数值1 + 数值2 -->
+          <div class="row">
+            <el-input v-model="item.ageValue1" placeholder="数值1" />
+            <el-input v-model="item.ageValue2" placeholder="数值2" :disabled="item.ageType !== '范围'"/>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref ,watch} from 'vue'
-import DataItem from './DataItem.vue'
+import { ref, watch } from 'vue'
 
 // 1. 接收父组件传入的值
 const props = defineProps({
@@ -71,31 +64,45 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
 const localList = ref([{
   metric: 'age',
   ageType: '等于',
   ageValue1: null,
   ageValue2: null
 }])
+
 // 2. 定义更新事件
 const emit = defineEmits(['update:modelValue'])
 
 // 3. 把所有数据绑定到 props.modelValue 上
 const searchQuery = ref('')
-const gender = ref(1)
+// 初始值改为 null = 不选中任何性别
+const gender = ref(null)
 
+// 性别点击处理：实现取消选中
+const handleGenderClick = (val) => {
+  // 如果点击的是当前选中的值，就清空
+  if (gender.value === val) {
+    gender.value = null
+  } else {
+    // 否则选中
+    gender.value = val
+  }
+}
 
 // 4. 自动同步给父组件
 const syncToParent = () => {
   emit('update:modelValue', {
     patientName: searchQuery.value,
-    patientGender: gender.value == 1 ? '男' : '女',
-    ageType:localList.value[0].ageType,
+    // 空值时传 null，更规范
+    patientGender: gender.value === 1 ? '男' : gender.value === 0 ? '女' : null,
+    ageType: localList.value[0].ageType,
     ageValue1: localList.value[0].ageValue1,
     ageValue2: localList.value[0].ageValue2
-    
   })
 }
+
 const addItem = () => {
   localList.value.push({
     metric: '',
@@ -105,7 +112,7 @@ const addItem = () => {
   })
 }
 
-// --- 4. 选项数据 ---
+// --- 选项数据 ---
 const metricOptions = [
   { label: '年龄', value: 'age' },
   { label: '血压', value: 'blood_pressure' },
@@ -113,13 +120,14 @@ const metricOptions = [
 ]
 
 const operatorOptions = [
-  { label: '=', value: '等于' },
-  { label: '>', value: '大于'},
-  { label: '<', value: '小于' },
-  { label: '>=', value: '大于等于' },
-  { label: '<=', value: '小于等于' },
-  { label: '<>', value: '范围' }
+  { label: '等于', value: '等于' },
+  { label: '大于', value: '大于'},
+  { label: '小于', value: '小于' },
+  { label: '大于等于', value: '大于等于' },
+  { label: '小于等于', value: '小于等于' },
+  { label: '范围', value: '范围' }
 ]
+
 // 监听变化自动同步
 watch([searchQuery, gender, localList], syncToParent, { deep: true })
 </script>
@@ -168,7 +176,7 @@ watch([searchQuery, gender, localList], syncToParent, { deep: true })
   margin-bottom: 10px;
 }
 
-/* 具体的卡片样式 (保持你之前的样式) */
+/* 具体的卡片样式 */
 .rule-builder {
   display: flex;
   flex-direction: column;

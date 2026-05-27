@@ -44,7 +44,7 @@
         <!-- 第二行：数值1 + 数值2 -->
         <div class="row">
           <el-input v-model="item.value1" placeholder="数值1" />
-          <el-input v-model="item.value2" placeholder="数值2" />
+          <el-input v-model="item.value2" placeholder="数值2" :disabled="item.type !== '范围'" />
         </div>
       </div>
     </div>
@@ -110,12 +110,12 @@ const metricOptions = [
 ]
 
 const operatorOptions = [
-  { label: '=', value: '等于' },
-  { label: '>', value: '大于'},
-  { label: '<', value: '小于' },
-  { label: '>=', value: '大于等于' },
-  { label: '<=', value: '小于等于' },
-  { label: '<>', value: '范围' }
+  { label: '等于', value: '等于' },
+  { label: '大于', value: '大于'},
+  { label: '小于', value: '小于' },
+  { label: '大于等于', value: '大于等于' },
+  { label: '小于等于', value: '小于等于' },
+  { label: '范围', value: '范围' }
 ]
 </script>
 
