@@ -1,4 +1,4 @@
-diagnosis<template>
+<template>
   <div class="app-container">
     <!-- 主要内容区域 -->
     <div class="main-content">
@@ -6,22 +6,33 @@ diagnosis<template>
       <div class="content-body">
         <!-- 动态组件渲染区域 -->
         <div class="component-wrapper">
-          <AuxiliaryDiagnosis v-if="activeTab === 'diagnosis'" />
-          <TreatmentRecommendation v-else />
+          <!-- 增加非空判断，确保数据加载完成后再渲染子组件 -->
+          <AuxiliaryDiagnosis
+            :knowledge="knowledgeGraphResults"
+            v-if="activeTab === 'diagnosis' && Object.keys(knowledgeGraphResults).length"
+          />
+          <!-- 加载中占位（可选） -->
+          <div v-if="activeTab === 'diagnosis' && !Object.keys(knowledgeGraphResults).length" class="loading">
+            诊断数据加载中...
+          </div>
+          <TreatmentRecommendation
+            :treatment="treatmentResults"
+            v-else-if="activeTab === 'treatment'"
+          />
         </div>
 
         <!-- 切换按钮组：固定在底部 -->
         <div class="tab-switch">
           <el-button
             :color="activeTab === 'diagnosis' ? '#fa8c16' : '#1890ff'"
-            @click="activeTab = 'diagnosis'"
+            @click="switchTab('diagnosis')"
             class="btn-diagnosis"
           >
             辅助诊断
           </el-button>
           <el-button
             :color="activeTab === 'treatment' ? '#fa8c16' : '#1890ff'"
-            @click="activeTab = 'treatment'"
+            @click="switchTab('treatment')"
             class="btn-treatment"
           >
             治疗建议与用药推荐
@@ -33,27 +44,94 @@ diagnosis<template>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import AuxiliaryDiagnosis from '@/components/AuxiliaryDiagnosis.vue';
 import TreatmentRecommendation from '@/components/TreatmentRecommendation.vue';
-import { onMounted } from 'vue';
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
+
 const props = defineProps({
   activeButton: {
     type: String,
     default: 'auxiliaryDiagnosis',
   },
+  caseInfo: {
+    type: Object,
+    default: () => ({}),
+  },
 });
+
 const activeTab = ref('diagnosis');
-onMounted(() => {
-  activeTab.value = props.activeButton == 'auxiliaryDiagnosis' ? 'diagnosis' : 'treatment';
+const knowledgeGraphResults = ref({});
+const treatmentResults = ref({});
+
+// 初始化标签
+activeTab.value = props.activeButton === 'auxiliaryDiagnosis' ? 'diagnosis' : 'treatment';
+
+// 统一请求入口：根据当前标签请求对应接口
+const loadData = async () => {
+  // 没有病例信息不请求
+  if (!props.caseInfo || Object.keys(props.caseInfo).length === 0) {
+    ElMessage.warning('请先选择病例信息');
+    return;
+  }
+
+  try {
+    if (activeTab.value === 'diagnosis') {
+      // 请求辅助诊断接口
+      let res = await axios.post('/fuo-aiads/business/diagnosis', {
+        data: props.caseInfo,
+      });
+      if (res.data.code) {
+        knowledgeGraphResults.value = res.data.data || {};
+        console.log('辅助诊断结果:', knowledgeGraphResults.value);
+      }
+    } else {
+      // 请求治疗建议接口
+      let res = await axios.post('/fuo-aiads/business/treatment', {
+        data: props.caseInfo,
+      });
+      if (res.data.code) {
+        treatmentResults.value = res.data.data.treatment_results || {};
+        console.log('治疗建议结果:', treatmentResults.value);
+      }
+    }
+  } catch (err) {
+    ElMessage.error('数据请求失败，请重试');
+    console.error(err);
+  }
+};
+
+// 切换标签并刷新数据
+const switchTab = (tab) => {
+  activeTab.value = tab;
+  loadData();
+};
+
+// 监听：标签变化 → 重新请求
+watch(activeTab, () => {
+  loadData();
 });
+
+// 监听：病例信息变化 → 重新请求当前标签数据
+watch(
+  () => props.caseInfo,
+  () => {
+    loadData();
+  },
+  { deep: true }
+);
+
+// 初始加载
+loadData();
 </script>
 
 <style scoped>
 .app-container {
   width: 100%;
+  height: 100%;
   background-color: #f0f2f5;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
 }
 
 .main-content {
@@ -69,7 +147,6 @@ onMounted(() => {
   flex-direction: column;
   padding: 20px;
   overflow: hidden;
-  position: relative;
   background: #fff;
   border-left: 1px solid #e8e8e8;
 }
@@ -94,11 +171,9 @@ onMounted(() => {
   color: white;
   font-weight: bold;
   padding: 10px 30px;
-  border-radius: 0 4px 4px 0;
-  margin-left: -1px;
+  border-radius: 4px 0 0 4px;
   width: 50%;
 }
-
 
 .btn-treatment {
   color: white;
@@ -108,5 +183,4 @@ onMounted(() => {
   margin-left: -1px;
   width: 50%;
 }
-
 </style>

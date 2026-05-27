@@ -7,13 +7,13 @@
 
     <!-- 中部：自适应宽度 -->
     <div class="layout-center">
-      <MedicalRecordForm  :patientInfo="patientInfo" />
+      <MedicalRecordForm  :patientInfo="patientInfo" @case-info="handleCaseInfo"/>
     </div>
 
     <!-- 右侧：固定宽度 -->
     <div class="layout-right">
       <AiAssistant v-if="showButton != 'auxiliaryDiagnosis'&&showButton != 'treatmentRecommendation'" @function-click="handleAiAction" />
-      <RightPage v-else :activeButton="showButton" />
+      <RightPage :caseInfo="caseInfomation" v-else :activeButton="showButton" />
     </div>
   </div>
 </template>
@@ -27,12 +27,12 @@ import axios from 'axios'
 import { onMounted,ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore.js' // 引入刚才创建的 Store
-import { pa } from 'element-plus/es/locales.mjs'
+import { ca, pa } from 'element-plus/es/locales.mjs'
 const router = useRouter()
 const patientInfo = ref('')
 
 const fileStore = useFileStore()
-
+const caseInfomation  = ref({})
 // 接收子组件传递过来的文件对象
 const handleFileUpload = (file) => {
   console.log('父组件接收到文件：', file)
@@ -44,6 +44,11 @@ const handleFileUpload = (file) => {
   router.push('/aiads/documentView') 
 }
 const showButton = ref('')
+const handleCaseInfo = (caseInfo) => {
+  console.log('父组件接收到病例信息:', caseInfo)
+  caseInfomation.value = caseInfo
+  // 这里可以添加加载患者数据的逻辑
+}
 // 接收子组件传递过来的标识，并做相应的逻辑处理
 const handleAiAction = (actionType) => {
   console.log('子组件点击了：', actionType)

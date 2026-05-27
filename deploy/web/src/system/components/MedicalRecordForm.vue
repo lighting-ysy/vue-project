@@ -86,14 +86,14 @@ const formData = reactive({
   caseDiagnostic: '',
   caseTreatment: ''
 })
-
+const emit = defineEmits(['case-info'])
 // 定义表单引用，用于校验
 const recordFormRef = ref(null)
 
 // 1. 获取病例详情的方法
 const fetchData = (id) => {
   if (!id) return
-  const url = '/api/v1/register/selectCase'
+  const url = '/fuo-aiads/register/selectCase'
   
   // 模拟请求（实际使用时请替换为你的真实 axios.get）
   axios.get(url, { params: { registerId: id } }).then((res) => {
@@ -123,7 +123,7 @@ const fetchData = (id) => {
     formData.casePhysicalExam = formatExamArray(data.casePhysicalExam)
     formData.caseNormalExam = formatExamArray(data.caseNormalExam)
     formData.caseSpecificExam = formatExamArray(data.caseSpecificExam)
-
+emit('case-info', {...data,registerId:id})
   }).catch((err) => {
     console.error('❌ 请求失败:', err)
   })
@@ -242,7 +242,7 @@ const handleSave = () => {
   console.log('💾 准备提交给后端的数据：', submitData)
 
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/api/v1/register/updateCase', {data:submitData}).then((res) => {
+  axios.post('/fuo-aiads/register/updateCase', {data:submitData}).then((res) => {
     console.log('💾 保存成功', res.data)
     ElMessage.success('保存成功')
   }).catch((err) => {
@@ -257,7 +257,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/api/v1/register/deleteRegisterLogically', {
+  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)

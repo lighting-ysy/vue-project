@@ -20,7 +20,7 @@
           <div class="form-header">
             <el-button type="primary" @click="handleSave">保存</el-button>
             <el-button type="danger" @click="handleDelete">删除</el-button>
-            <el-button type="success" @click="fetchData" :loading="loading">提取</el-button>
+            <el-button type="success" @click="fetchData" >提取</el-button>
             <el-button type="primary" >新增</el-button>
           </div>
           <el-form :model="formData" label-width="120px" label-position="left" class="record-form" size="small">
@@ -66,8 +66,8 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import mammoth from 'mammoth' // 引入 mammoth 库
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import mammoth from 'mammoth'
 import { useFileStore } from '@/stores/fileStore.js'
 import axios from 'axios'
 const file = ref(null)
@@ -122,9 +122,9 @@ const formData = reactive({
 // 定义表单引用，用于校验
 const recordFormRef = ref(null)
 
+
 // 1. 获取病例详情的方法
 const fetchData = () => {
-  // 1. 直接使用 Store 中的文件，而不是 file.value
   const fileToUse = fileStore.currentFile;
   
   if (!fileToUse) {
@@ -132,69 +132,71 @@ const fetchData = () => {
     return;
   }
 
-  loading.value = true; // 假设你有 loading 状态
+  // ✅ 页面正中央居中加载，非全屏，轻量级弹窗
+  const loadingInstance = ElLoading.service({
+    target: document.body,     // 挂载到页面
+    fullscreen: false,         // 关闭全屏
+    lock: true,
+    text: '正在提取...',
+    background: 'rgba(255, 255, 255, 0.8)',
+    // 核心：让它居中显示
+    customClass: 'center-loading'
+  })
 
-  const url = '/api/v1/business/extract';
-  
-  // 2. 直接读取文件内容发送
+  const url = '/fuo-aiads/business/extract';
   const reader = new FileReader();
+  
   reader.onload = async (e) => {
     try {
       const arrayBuffer = e.target.result;
-      // 注意：这里假设后端接受 arrayBuffer 或你需要转换为 Blob
-      // 如果后端接口必须接收 File 对象，直接使用 fileToUse 即可
-      
       const response = await axios.post(url, {
-        file: fileToUse // 直接传 File 对象
-        // 或者根据后端要求构建 FormData
+        file: fileToUse
       }, {
-        headers: { 'Content-Type': 'multipart/form-data' } // 如果是文件上传，通常用 form-data
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // 处理响应...
       const data = response.data.data || {};
-      // ... 填充 formData 逻辑
-       formData.patientId = data.patientId || '' 
-    formData.patientName = data.patientName || ''
-    formData.patientGender = data.patientGender || ''
-    formData.patientAge = data.patientAge || ''
-    formData.patientCareer = data.patientCareer || ''
-    formData.patientAddress = data.patientAddress || ''
-    formData.caseChief = data.caseChief || ''
-    formData.casePresent = data.casePresent || ''
-    formData.casePast = data.casePast || ''
-    formData.caseFamily = data.caseFamily || ''
-    formData.caseAllergy = data.caseAllergy || ''
-    formData.casePerson = data.casePerson || ''
-    formData.caseTreatment = data.caseTreatment || ''
-    formData.caseDiseaseType = data.caseDiseaseType || ''
-    formData.caseDiagnostic = data.caseDiagnostic || ''
-    formData.caseOther = data.caseOther || ''
+      formData.patientId = data.patientId || '' 
+      formData.patientName = data.patientName || ''
+      formData.patientGender = data.patientGender || ''
+      formData.patientAge = data.patientAge || ''
+      formData.patientCareer = data.patientCareer || ''
+      formData.patientAddress = data.patientAddress || ''
+      formData.caseChief = data.caseChief || ''
+      formData.casePresent = data.casePresent || ''
+      formData.casePast = data.casePast || ''
+      formData.caseFamily = data.caseFamily || ''
+      formData.caseAllergy = data.caseAllergy || ''
+      formData.casePerson = data.casePerson || ''
+      formData.caseTreatment = data.caseTreatment || ''
+      formData.caseDiseaseType = data.caseDiseaseType || ''
+      formData.caseDiagnostic = data.caseDiagnostic || ''
+      formData.caseOther = data.caseOther || ''
 
-    // 数组转字符串的辅助函数
-    const formatExamArray = (arr) => {
-      if (!arr || arr.length === 0) return ''
-      return arr.map(item => {
-        const unit = item.itemUnit ? item.itemUnit : ''
-        return `${item.itemName}: ${item.itemValue}${unit}`
-      }).join(' | ')
-    }
+      const formatExamArray = (arr) => {
+        if (!arr || arr.length === 0) return ''
+        return arr.map(item => {
+          const unit = item.itemUnit ? item.itemUnit : ''
+          return `${item.itemName}: ${item.itemValue}${unit}`
+        }).join(' | ')
+      }
 
-    formData.casePhysicalExam = formatExamArray(data.casePhysicalExam)
-    formData.caseNormalExam = formatExamArray(data.caseNormalExam)
-    formData.caseSpecificExam = formatExamArray(data.caseSpecificExam)
-
+      formData.casePhysicalExam = formatExamArray(data.casePhysicalExam)
+      formData.caseNormalExam = formatExamArray(data.caseNormalExam)
+      formData.caseSpecificExam = formatExamArray(data.caseSpecificExam)
+      
+      ElMessage.success('提取成功')
     } catch (err) {
       console.error('❌ 请求失败:', err);
       ElMessage.error('提取失败');
     } finally {
-      loading.value = false;
+      loadingInstance.close()
     }
   };
   
   reader.onerror = () => {
+    loadingInstance.close()
     ElMessage.error('文件读取失败');
-    loading.value = false;
   };
   
   reader.readAsArrayBuffer(fileToUse);
@@ -248,7 +250,7 @@ const handleSave = async () => {
   let responseId = {}
   let newPatientForm = {patientName: formData.patientName, patientGender: formData.patientGender, patientAge: Number(formData.patientAge)}
   console.log('开始保存')
-  let res = await axios.post('/api/v1/register/createRegistedPatient', { data: newPatientForm })
+  let res = await axios.post('/fuo-aiads/register/createRegistedPatient', { data: newPatientForm })
   if(res.data){
     responseId = res.data.data
     console.log('保存成功', responseId)
@@ -284,7 +286,7 @@ const update = (responseId)=>{
   }
   console.log('💾 准备提交给后端的数据：', submitData)
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/api/v1/register/updateCase', {data:submitData}).then((res) => {
+  axios.post('/fuo-aiads/register/updateCase', {data:submitData}).then((res) => {
     ElMessage.success('保存成功',res.data)
   }).catch((err) => {
     console.error('❌ 保存失败:', err)
@@ -299,7 +301,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/api/v1/register/deleteRegisterLogically', {
+  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)
@@ -552,5 +554,15 @@ onMounted(( )=>{
   display: flex;
   gap: 10px;
   width: 100%;
+}
+.center-loading {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 180px !important;
+  height: 120px !important;
+  border-radius: 8px !important;
+  z-index: 9999 !important;
 }
 </style>

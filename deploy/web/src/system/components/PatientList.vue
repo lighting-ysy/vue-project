@@ -14,34 +14,74 @@
           <el-button :icon="Search" @click="handleSearch">确认</el-button>
         </template>
       </el-input>
-      <!-- 新增患者按钮 -->
       <el-button size="small" :icon="Plus" style="margin-left: 5px;" @click="openAddDialog" title="新增患者" />
       <el-button size="small" :icon="Download" style="margin-left: 5px;" @click="triggerFileSelect" title="添加病例"/>
-    </div>
+      
+      <!-- 只显示查询内容 单选框 -->
+      <el-radio-group v-model="queryOnly" class="search-radio">
+        <el-radio
+          label="1"
+          @click.prevent="toggleQueryOnly"
+        >只显示查询内容</el-radio>
+      </el-radio-group>
 
-    <!-- 隐藏的 input 标签，用于唤起系统文件选择器 -->
-    <!-- 注意：accept 属性建议补充 .doc,.txt 等完整类型 -->
-    <input 
+      <el-button size="small" @click="toggleCollapse">
+        {{ isCollapseOpen ? '收起查询' : '更多查询' }}
+      </el-button>
+    </div>
+<input 
       ref="fileInputRef" 
       type="file" 
       style="display: none" 
       accept=".pdf,.doc,.docx,.txt" 
       @change="handleFileChange"
     />
+    <!-- 折叠面板区域 -->
+    <el-collapse v-model="activeCollapse" class="custom-collapse" v-if="isCollapseOpen">
+      <el-collapse-item name="filters">
+        <data-info v-model="patientInfo" />
+        <data-tag v-model="selectedSymptoms" />
+        <data-item v-model="ruleConfig" />
+        <el-button type="primary" @click="printForm">完成查询</el-button>
+      </el-collapse-item>
+    </el-collapse>
 
-    <!-- 患者列表 -->
+    <!-- 患者与就诊记录列表 -->
     <div class="patient-list">
       <div
         v-for="patient in patients"
         :key="patient.patientId"
-        class="patient-card"
-        :class="{ active: activeId === patient.registerId }"
-        @click="selectPatient(patient)"
+        class="patient-group"
       >
-        <span class="name">{{ patient.patientName }}</span>
-        <span class="gender" :class="{ female: patient.patientGender === '女' }">
-          {{ patient.patientGender }}
-        </span>
+        <div
+          class="patient-card"
+          :class="{ active: activeId === patient.patientId }"
+          @click="selectPatient(patient)"
+        >
+          <span class="name">{{ patient.patientName }}</span>
+          <span class="gender" :class="{ female: patient.patientGender === '女' }">
+            {{ patient.patientGender }}
+          </span>
+        </div>
+
+        <transition name="slide-fade">
+          <div
+            v-if="activeId === patient.patientId && patient.registerList && patient.registerList.length > 0"
+            class="register-list"
+          >
+            <!-- 这里根据 queryOnly 自动过滤 isSelected -->
+            <div
+              v-for="(record, index) in filterRegisterList(patient.registerList)"
+              :key="record.registerId || index"
+              class="register-item"
+              :class="{ active: selectedRegisterId === record.registerId }"
+              @click.stop="selectRegister(record, patient)"
+            >
+              <span class="date">{{ record.createTime || record.date }}</span>
+              <span class="diagnosis">{{ record.caseDiagnostic }}</span>
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -60,31 +100,56 @@
       />
     </div>
 
-    <!-- 新增患者弹窗 -->
+    <!-- 新增就诊弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      title="新增患者"
-      width="30%"
+      title="新增新建就诊"
+      width="40%"
       :close-on-click-modal="false"
     >
-      <el-form :model="newPatientForm" label-width="60px" ref="formRef">
-        <el-form-item label="姓名" prop="patientName">
-          <el-input v-model="newPatientForm.patientName" placeholder="请输入患者姓名" />
-        </el-form-item>
-        <el-form-item label="性别" prop="patientGender">
-          <el-radio-group v-model="newPatientForm.patientGender">
-            <el-radio label="男">男</el-radio>
-            <el-radio label="女">女</el-radio>
+      <el-form :model="addVisitForm" label-width="0px" ref="formRef">
+        <div class="radio-group-container">
+          <el-radio-group v-model="addVisitForm.mode" class="radio-group">
+            <el-radio label="new">新建患者</el-radio>
+            <el-radio label="bind">绑定患者</el-radio>
           </el-radio-group>
-        </el-form-item>
-        <el-form-item label="年龄" prop="patientAge">
-          <el-input type="number" v-model.number="newPatientForm.patientAge" />
-        </el-form-item>
+        </div>
+
+        <div v-if="addVisitForm.mode === 'new'" class="new-patient-fields">
+          <el-form-item>
+            <el-input v-model="addVisitForm.newPatientName" placeholder="请输入姓名" class="input-field" />
+          </el-form-item>
+          <el-form-item>
+            <el-input v-model="addVisitForm.newPatientGender" placeholder="请输入性别" class="input-field" />
+          </el-form-item>
+        </div>
+
+        <div v-if="addVisitForm.mode === 'bind'" class="bind-patient-field">
+          <el-form-item>
+            <el-select
+              v-model="addVisitForm.bindPatientId"
+              placeholder="请选择患者"
+              class="select-field"
+              filterable
+              remote
+              :remote-method="debounceSearch"
+              @focus="featchPatientList"
+            >
+              <el-option
+                v-for="p in addPatients"
+                :key="p.patientId"
+                :label="`${p.patientName}(${p.patientGender})`"
+                :value="p.patientId"
+              />
+            </el-select>
+          </el-form-item>
+        </div>
       </el-form>
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitNewPatient">确定</el-button>
+          <el-button type="primary" @click="submitAddVisit">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -95,143 +160,218 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search, Download, Plus } from '@element-plus/icons-vue'
 import axios from 'axios'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import DataItem from './DataItem.vue'
+import DataTag from './DataTag.vue'
+import DataInfo from './DataInfo.vue'
 
-// 1. 响应式数据定义
-const patients = ref([]) // 存储当前页的患者列表
+// 折叠面板
+const activeCollapse = ref([])
+const isCollapseOpen = computed(() => activeCollapse.value.includes('filters'))
+const toggleCollapse = () => {
+  activeCollapse.value = isCollapseOpen.value ? [] : ['filters']
+}
+
+const patientInfo = ref({})
+const selectedRegisterId = ref('')
+const selectedSymptoms = ref(['发热'])
+const ruleConfig = ref([{ itemName: '心率', type: '等于', value1: null, value2: null }])
+
+const patients = ref([])
+const addPatients = ref([])
 const searchQuery = ref('')
 const activeId = ref('')
 const fileInputRef = ref(null)
-
-// 分页相关状态
 const currentPage = ref(1)
 const pageSize = ref(20)
-const total = ref(0) // 总条目数
-
-// 新增弹窗相关数据
+const total = ref(0)
 const dialogVisible = ref(false)
-const newPatientForm = ref({
-  patientName: '',
-  patientGender: '男',
-  patientAge: 18
+const queryOnly = ref('')
+
+const toggleQueryOnly = () => {
+  queryOnly.value = queryOnly.value === '1' ? '' : '1'
+  handleSearch()
+}
+
+// ===================== 核心过滤方法 =====================
+const filterRegisterList = (list) => {
+  if (!list) return []
+  // 开启只显示查询内容 → 只保留 isSelected = true
+  if (queryOnly.value === '1') {
+    return list.filter(item => item.isSelected === true)
+  }
+  // 未开启 → 返回全部
+  return list
+}
+
+const addVisitForm = ref({
+  mode: 'new',
+  newPatientName: '',
+  newPatientGender: '',
+  bindPatientId: ''
 })
+
+const printForm = () => {
+  let multiParam = {
+    pageSize: pageSize.value,
+    pageNum: currentPage.value,
+    patientInfo: patientInfo.value,
+    symptonList: selectedSymptoms.value,
+    examList: ruleConfig.value,
+  }
+  fetchData(multiParam)
+}
 
 const emit = defineEmits(['select', 'file-selected'])
 
-// 2. 分页与搜索逻辑 (核心补全部分)
-
-// 补全：处理每页条数变化
+// 分页与搜索
 const handleSizeChange = (newSize) => {
   pageSize.value = newSize
-  // 改变每页条数后，通常需要回到第一页重新查询
-  currentPage.value = 1 
+  currentPage.value = 1
   fetchData()
 }
-
-// 补全：处理当前页码变化
 const handlePageChange = (page) => {
   currentPage.value = page
   fetchData()
 }
-
-// 修正：搜索逻辑，点击确认或回车触发
 const handleSearch = () => {
-  // 搜索时重置到第一页
   currentPage.value = 1
   fetchData()
 }
 
-// 3. 数据请求逻辑 (核心修正：带上分页和搜索参数)
-const fetchData = async () => {
-  const url = '/api/v1/register/selectCaseList'
-  
-  // 构建请求参数
-  const params = {
-    pageNum: currentPage.value,
-    pageSize: pageSize.value
+// 防抖
+let timer = null
+const debounce = (fn, delay = 300) => {
+  return (val) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn(val)
+    }, delay)
   }
-  
-  // 如果有搜索关键词，加入参数
+}
+
+// 弹窗搜索患者
+const featchPatientList = async (keyword = '') => {
+  const url = '/fuo-aiads/mainsuit/patientList'
+  const params = { patientName: keyword.trim() }
+  try {
+    const res = await axios.get(url, { params })
+    addPatients.value = res.data.data || []
+  } catch (err) {
+    console.error('❌ 患者搜索失败:', err)
+    ElMessage.error('患者搜索失败')
+  }
+}
+const debounceSearch = debounce(featchPatientList, 300)
+
+// 获取病例列表
+const fetchData = async (multiParam) => {
+  const url = '/fuo-aiads/mainsuit/selectCaseList'
+  const params = multiParam || {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value,
+
+  }
+
   if (searchQuery.value.trim()) {
     params.patientName = searchQuery.value.trim()
   }
 
   try {
-    const res = await axios.get(url, { params })
-    console.log('✅ 获取病例列表数据成功:', res.data)
-    
+    const res = await axios.post(url, { data: params })
     const data = res.data.data || {}
-    // 假设后端返回的数据结构是 { registerList: [], total: 100 }
-    patients.value = data.registerList || []
+    patients.value = data.patientList || []
     total.value = data.total || 0
   } catch (err) {
-    console.error('❌ 请求失败:', err)
+    console.error('❌ 数据加载失败:', err)
     ElMessage.error('数据加载失败')
   }
 }
 
-// 4. 其他交互逻辑
-
-// 选择患者
-const selectPatient = (patient) => {
-  activeId.value = patient.registerId
-  emit('select', patient)
-}
-
-// 打开新增弹窗
+// 打开弹窗
 const openAddDialog = () => {
-  newPatientForm.value = { patientName: '', patientGender: '男', patientAge: 18 }
+  addVisitForm.value = { mode: 'new', newPatientName: '', newPatientGender: '', bindPatientId: '' }
   dialogVisible.value = true
 }
 
-// 提交新增患者
-const submitNewPatient = async () => {
-  if (!newPatientForm.value.patientName.trim()) {
-    ElMessage.warning('请输入患者姓名')
-    return
-  }
+// 提交新增就诊
+const submitAddVisit = async () => {
+  if (addVisitForm.value.mode === 'new') {
+    if (!addVisitForm.value.newPatientName.trim()) return ElMessage.warning('请输入患者姓名')
+    if (!addVisitForm.value.newPatientGender.trim()) return ElMessage.warning('请输入患者性别')
 
-  try {
-    const res = await axios.post('/api/v1/register/createRegistedPatient', { 
-      data: newPatientForm.value 
-    })
-    
-    console.log('✅ 新增患者成功:', res.data)
-    ElMessage.success('新增患者成功')
-    dialogVisible.value = false
-    
-    // 新增成功后，刷新列表 (保持当前页码，除非是搜索状态，否则可能需要重置到第一页)
-    // 通常建议重置到第一页以查看最新数据
-    currentPage.value = 1
-    fetchData()
-  } catch (err) {
-    console.error('❌ 新增失败:', err)
+    try {
+      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+        data: {
+          patientName: addVisitForm.value.newPatientName,
+          patientGender: addVisitForm.value.newPatientGender,
+        }
+      })
+      ElMessage.success('新建患者并创建就诊成功')
+      dialogVisible.value = false
+      fetchData()
+    } catch (err) {
+      console.error('❌ 新建失败:', err)
+      ElMessage.error('操作失败')
+    }
+  } else {
+    if (!addVisitForm.value.bindPatientId) return ElMessage.warning('请选择要绑定的患者')
+    try {
+      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+        data: {
+          patientId: addVisitForm.value.bindPatientId
+        }
+      })
+      ElMessage.success('绑定患者并创建就诊成功')
+      dialogVisible.value = false
+      fetchData()
+    } catch (err) {
+      console.error('❌ 绑定失败:', err)
+      ElMessage.error('操作失败')
+    }
   }
 }
 
-// 文件导入逻辑
-const triggerFileSelect = () => {
-  fileInputRef.value?.click()
-}
+const triggerFileSelect = () => fileInputRef.value?.click()
 
 const handleFileChange = (event) => {
   const file = event.target.files[0]
   if (file) {
-    console.log('选中的文件：', file.name)
     emit('file-selected', file)
-    // 清空 input 的 value，以便可以选择同一个文件
     event.target.value = ''
   }
 }
 
-// 页面加载时获取数据
+const selectPatient = (patient) => {
+  if (activeId.value === patient.patientId) {
+    activeId.value = ''
+    selectedRegisterId.value = ''
+    emit('select', null)
+  } else {
+    activeId.value = patient.patientId
+    selectedRegisterId.value = ''
+    if (!patient.registerList) patient.registerList = []
+    emit('select', patient)
+  }
+}
+
+const selectRegister = (record, patient) => {
+  selectedRegisterId.value = record.registerId
+  emit('select', {
+    ...record,
+    patientId: patient.patientId,
+    patientName: patient.patientName,
+    patientAge: patient.patientAge || null,
+    patientGender: patient.patientGender
+  })
+}
+
 onMounted(() => {
   fetchData()
 })
 </script>
 
 <style scoped>
-/* 保持原有样式不变 */
 .left-panel {
   padding: 15px;
   background-color: #fff;
@@ -241,15 +381,37 @@ onMounted(() => {
   flex-direction: column;
 }
 
+.custom-collapse {
+  border-top: none;
+  border-bottom: none;
+  margin-bottom: 15px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.custom-collapse :deep(.el-collapse-item__header),
+.custom-collapse :deep(.el-collapse-item__wrap) {
+  border-bottom: none;
+  background-color: transparent;
+}
+.custom-collapse :deep(.el-collapse-item__content) {
+  padding-bottom: 10px;
+}
+
 .panel-title {
   margin: 0 0 15px 0;
   color: #409eff;
   font-weight: bold;
   text-align: center;
 }
-
 .search-box {
   margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.search-radio {
+  margin-left: 8px;
 }
 
 .patient-list {
@@ -258,47 +420,67 @@ onMounted(() => {
   margin-bottom: 10px;
 }
 
-.pagination-box {
-  display: flex;
-  justify-content: center;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
-}
-
 .patient-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
   background-color: #f5f7fa;
-  margin-bottom: 10px;
-  border-radius: 8px;
+  margin-bottom: 2px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
   font-weight: 500;
   color: #333;
 }
-
-.patient-card:hover {
-  background-color: #e1f3d8;
-}
-
+.patient-card:hover { background-color: #e1f3d8; }
 .patient-card.active {
   background-color: #409eff;
   color: #fff;
 }
 
-.gender {
-  font-size: 12px;
-  font-weight: normal;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #e4e7ed;
-  color: #606266;
+.register-list {
+  margin-left: 15px;
+  margin-bottom: 10px;
+  border-left: 2px solid #409eff;
 }
 
-.gender.female {
-  background: #f56c6c;
-  color: #fff;
+.register-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 15px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px dashed #eee;
 }
+
+.register-item:last-child { border-bottom: none; }
+.register-item:hover {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+.register-item.active {
+  background-color: #ecf5ff;
+  color: #409eff;
+  font-weight: bold;
+}
+.register-item .date { color: #909399; font-size: 12px; }
+.register-item.active .date { color: #409eff; }
+
+.slide-fade-enter-active { transition: all 0.3s ease-out; }
+.slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
+.radio-group-container { margin-bottom: 20px; }
+.radio-group { display: flex; align-items: center; }
+.radio-label { font-size: 18px; margin-right: 30px; }
+.new-patient-fields { display: flex; gap: 20px; }
+.input-field { flex: 1; }
+.bind-patient-field { width: 100%; }
+.select-field { width: 100%; }
 </style>
