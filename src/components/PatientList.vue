@@ -164,6 +164,7 @@ import { ElMessage } from 'element-plus'
 import DataItem from './DataItem.vue'
 import DataTag from './DataTag.vue'
 import DataInfo from './DataInfo.vue'
+import 'element-plus/es/components/message/style/css'
 
 // 折叠面板
 const activeCollapse = ref([])
@@ -194,13 +195,17 @@ const toggleQueryOnly = () => {
 }
 
 // ===================== 核心过滤方法 =====================
+// ===================== 核心过滤方法 =====================
 const filterRegisterList = (list) => {
+  // 如果列表为空，直接返回空数组
   if (!list) return []
-  // 开启只显示查询内容 → 只保留 isSelected = true
+
+  // 如果开启了“只显示查询内容” (值为 '1')
   if (queryOnly.value === '1') {
     return list.filter(item => item.isSelected === true)
   }
-  // 未开启 → 返回全部
+  
+  // 如果未开启，则返回全部列表
   return list
 }
 
@@ -212,13 +217,30 @@ const addVisitForm = ref({
 })
 
 const printForm = () => {
+  console.log(ruleConfig.value)
+  // 1. 验证 ruleConfig.value
+  // some() 方法会遍历数组，只要有一项满足条件（value1为null或""）就返回 true
+  const hasEmptyValue1 = ruleConfig.value.some(item => {
+    // 检查 value1 是否为 null 或 空字符串
+    return item.value1 === null || item.value1 === '';
+  });
+
+  // 2. 如果发现空值，清空整个列表
+  if (hasEmptyValue1) {
+    ruleConfig.value = []; // 重置列表
+    // 可选：给用户提示
+    ElMessage.warning('检测到数值1有空值，已清空检查结果列表');
+  }
+
+  // 3. 继续执行后续的查询逻辑
   let multiParam = {
     pageSize: pageSize.value,
     pageNum: currentPage.value,
     patientInfo: patientInfo.value,
     symptonList: selectedSymptoms.value,
-    examList: ruleConfig.value,
+    examList: ruleConfig.value, // 此时这里可能是新数据，也可能是 []
   }
+  
   fetchData(multiParam)
 }
 
@@ -270,11 +292,17 @@ const fetchData = async (multiParam) => {
   const params = multiParam || {
     pageNum: currentPage.value,
     pageSize: pageSize.value,
-
+    patientInfo:{
+      patientName:'',
+      patientGender:'',
+      ageType:'范围',
+      ageValue1: null,
+      ageValue2: null,
+    }
   }
 
   if (searchQuery.value.trim()) {
-    params.patientName = searchQuery.value.trim()
+    params.patientInfo.patientName = searchQuery.value.trim()
   }
 
   try {
@@ -282,6 +310,9 @@ const fetchData = async (multiParam) => {
     const data = res.data.data || {}
     patients.value = data.patientList || []
     total.value = data.total || 0
+    patientInfo.value = {}
+    selectedSymptoms.value = ['发热']
+    ruleConfig.value = [{ itemName: '心率', type: '等于', value1: null, value2: null }]
   } catch (err) {
     console.error('❌ 数据加载失败:', err)
     ElMessage.error('数据加载失败')

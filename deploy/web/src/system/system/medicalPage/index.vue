@@ -27,7 +27,6 @@ import axios from 'axios'
 import { onMounted,ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore.js' // 引入刚才创建的 Store
-import { ca, pa } from 'element-plus/es/locales.mjs'
 const router = useRouter()
 const patientInfo = ref('')
 

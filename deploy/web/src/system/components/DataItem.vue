@@ -3,48 +3,29 @@
     <!-- 头部：标题 + 新增按钮 -->
     <div class="group-header">
       <h3 class="title">检查结果</h3>
-      <el-button
-        type="primary"
-        :icon="Plus"
-        circle
-        size="small"
-        @click="addItem"
-        class="add-btn"
-      />
+      <el-button type="primary" :icon="Plus" circle size="small" @click="addItem" class="add-btn" />
     </div>
 
     <!-- 循环渲染每一个规则项 -->
-    <div
-      v-for="(item, index) in localList"
-      :key="index"
-      class="rule-item-wrapper"
-    >
+    <div v-for="(item, index) in localList" :key="index" class="rule-item-wrapper">
       <div class="rule-builder">
         <!-- 第一行：指标 + 运算符 -->
         <div class="row">
-          <el-select v-model="item.itemName" placeholder="请选择" style="width: 100%">
-            <el-option
-              v-for="opt in metricOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
+          <!-- 在 el-select 上添加 filterable 属性 -->
+          <el-select v-model="item.itemName" placeholder="请选择" filterable remote :remote-method="fetchMetricOptions"
+            :loading="loading" style="width: 100%">
+            <el-option v-for="opt in metricOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
 
           <el-select v-model="item.type" placeholder="=" style="width: 100%">
-            <el-option
-              v-for="opt in operatorOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
+            <el-option v-for="opt in operatorOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </div>
 
         <!-- 第二行：数值1 + 数值2 -->
         <div class="row">
           <el-input v-model="item.value1" placeholder="数值1" />
-          <el-input v-model="item.value2" placeholder="数值2" />
+          <el-input v-model="item.value2" placeholder="数值2" :disabled="item.type !== '范围'" />
         </div>
       </div>
     </div>
@@ -52,9 +33,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
-
+import axios from 'axios'
 // --- 1. Props & Emits ---
 // 接收一个数组
 const props = defineProps({
@@ -63,7 +44,7 @@ const props = defineProps({
     default: () => []
   }
 })
-
+const loading = ref(false)
 const emit = defineEmits(['update:modelValue'])
 
 // --- 2. 本地数据同步 ---
@@ -95,28 +76,50 @@ watch(
 const addItem = () => {
   localList.value.push({
     itemName: '',
-    type: '',
+    type: '等于',
     value1: null,
     value2: null
   })
 }
 
 // --- 4. 选项数据 ---
-const metricOptions = [
-  { label: '血糖', value: '血糖' },
-  { label: '血压', value: '血压' },
-  { label: '心率', value: '心率' },
-  { label: '体温', value: '体温' }
-]
+const metricOptions = ref([])
 
 const operatorOptions = [
-  { label: '=', value: '等于' },
-  { label: '>', value: '大于'},
-  { label: '<', value: '小于' },
-  { label: '>=', value: '大于等于' },
-  { label: '<=', value: '小于等于' },
-  { label: '<>', value: '范围' }
+  { label: '等于', value: '等于' },
+  { label: '大于', value: '大于' },
+  { label: '小于', value: '小于' },
+  { label: '大于等于', value: '大于等于' },
+  { label: '小于等于', value: '小于等于' },
+  { label: '范围', value: '范围' }
 ]
+const fetchMetricOptions = async (query = '') => {
+  loading.value = true
+  try {
+    let res = await axios.get('/fuo-aiads/mainsuit/examItemList', {
+      params: {
+        isDigital: 1,
+        itemName: query // 将用户输入的关键词传给后端
+      }
+    })
+    if (res.data.code) {
+      metricOptions.value = res.data.data.map(item => ({
+        label: item.itemName,
+        value: item.itemName
+      }))
+    }
+  } catch (error) {
+    console.error("获取指标失败", error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  // 页面加载时，默认拉取一次空搜索的数据
+  fetchMetricOptions()
+})
+
 </script>
 
 <style scoped>
@@ -167,7 +170,7 @@ const operatorOptions = [
   gap: 10px;
 }
 
-.row > * {
+.row>* {
   flex: 1;
 }
 </style>
