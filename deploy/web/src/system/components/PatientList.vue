@@ -237,7 +237,7 @@ const printForm = () => {
     pageSize: pageSize.value,
     pageNum: currentPage.value,
     patientInfo: patientInfo.value,
-    symptonList: selectedSymptoms.value,
+    symptomList: selectedSymptoms.value,
     examList: ruleConfig.value, // 此时这里可能是新数据，也可能是 []
   }
   
