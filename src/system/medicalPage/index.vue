@@ -2,18 +2,18 @@
   <div class="app-container">
     <!-- 左侧：固定宽度 -->
     <div class="layout-left">
-      <PatientList @select="handlePatientSelect" @file-selected="handleFileUpload"/>
+      <PatientList @select="handlePatientSelect" @file-selected="handleFileUpload" @blank-clicked="clearMedicalForm"/>
     </div>
 
     <!-- 中部：自适应宽度 -->
     <div class="layout-center">
-      <MedicalRecordForm  :patientInfo="patientInfo" @case-info="handleCaseInfo"/>
+      <MedicalRecordForm  :patientInfo="patientInfo"  @function-click="handleAiAction" @case-info="handleCaseInfo"/>
     </div>
 
     <!-- 右侧：固定宽度 -->
-    <div class="layout-right">
-      <AiAssistant v-if="showButton != 'auxiliaryDiagnosis'&&showButton != 'treatmentRecommendation'" @function-click="handleAiAction" />
-      <RightPage :caseInfo="caseInfomation" v-else :activeButton="showButton" />
+    <div v-if="(showButton == 'auxiliaryDiagnosis'||showButton == 'treatmentRecommendation')&&rightPage" class="layout-right">
+      <!-- <AiAssistant v-if="showButton != 'auxiliaryDiagnosis'&&showButton != 'treatmentRecommendation'" @function-click="handleAiAction" /> -->
+      <RightPage :caseInfo="caseInfomation" :activeButton="showButton" />
     </div>
   </div>
 </template>
@@ -27,9 +27,10 @@ import axios from 'axios'
 import { onMounted,ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore.js' // 引入刚才创建的 Store
+import { ElMessage } from 'element-plus'
 const router = useRouter()
 const patientInfo = ref('')
-
+const rightPage = ref(false)
 const fileStore = useFileStore()
 const caseInfomation  = ref({})
 // 接收子组件传递过来的文件对象
@@ -52,16 +53,25 @@ const handleCaseInfo = (caseInfo) => {
 const handleAiAction = (actionType) => {
   console.log('子组件点击了：', actionType)
   
-  if (actionType === 'auxiliaryDiagnosis') {
+  if (actionType === 'auxiliaryDiagnosis' && Object.keys(patientInfo.value).length>0) {
     // 执行打开中医四诊辅助的逻辑
     console.log('打开中医四诊辅助面板')
+    rightPage.value = true
     showButton.value = 'auxiliaryDiagnosis'
 
-  } else if (actionType === 'treatmentRecommendation') {
+  } else if (actionType === 'treatmentRecommendation' && Object.keys(patientInfo.value).length>0) {
     // 执行打开智能处方推荐的逻辑
     console.log('打开智能处方推荐面板')
+    rightPage.value = true
     showButton.value = 'treatmentRecommendation'
+  }else{
+    ElMessage.warning('请选择一条患者病例！')
   }
+}
+const clearMedicalForm = () => {
+  // 1. 清空选中的患者信息（触发 MedicalRecordForm 重新加载空数据）
+  patientInfo.value = {};
+  rightPage.value = false
 }
 const handlePatientSelect = (patient) => {
   console.log('切换到患者ID:', patient.registerId)

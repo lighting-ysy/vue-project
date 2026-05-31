@@ -127,6 +127,7 @@ onMounted(() => {
   width: 80%;
   /* 如果需要最大宽度限制 */
   /* max-width: 500px; */
+  padding: 0px 20px 0px 20px
 }
 
 /* 头部样式 */
