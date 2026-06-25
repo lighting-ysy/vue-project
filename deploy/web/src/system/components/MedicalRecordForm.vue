@@ -2,6 +2,8 @@
   <div class="center-panel">
     <!-- 顶部操作栏 -->
     <div class="top-actions">
+      <el-button type="primary" size="small" @click="handleFuncClick('auxiliaryDiagnosis')">辅助诊断</el-button>
+      <el-button type="primary" size="small"  @click="handleFuncClick('treatmentRecommendation')">治疗建议与用药推荐</el-button>
       <el-button type="primary" size="small" @click="handleSave">保存</el-button>
       <el-button type="danger" size="small" @click="handleDelete">删除</el-button>
     </div>
@@ -12,7 +14,7 @@
         <el-col :span="24" v-for="(item, index) in formItems" :key="index">
           <!-- 普通单行/多行文本输入 -->
           <el-form-item :label="item.label" v-if="item.type === 'input'">
-            <el-input v-model="formData[item.prop]" type="textarea" :rows="1" :placeholder="`请输入${item.label}`" />
+            <el-input v-model="formData[item.prop]" type="textarea" :rows="1" autosize :placeholder="`请输入${item.label}`" />
           </el-form-item>
 
           <!-- 单一下拉框 -->
@@ -36,7 +38,7 @@
                 <el-option label="感冒" value="感冒" />
                 <el-option label="咳嗽" value="咳嗽" />
               </el-select> -->
-              <el-input v-model="formData[item.prop2]"  placeholder="明确诊断"  style="flex: 1" />
+              <el-input v-model="formData[item.prop2]" placeholder="明确诊断" style="flex: 1" />
             </div>
           </el-form-item>
         </el-col>
@@ -72,7 +74,7 @@ const formItems = [
   { label: '治疗方案', prop: 'caseTreatment', type: 'input' }
 ]
 
-const formData = reactive({
+const initFormData = () => ({
   caseChief: '',
   casePresent: '',
   casePast: '',
@@ -86,21 +88,29 @@ const formData = reactive({
   caseDiagnostic: '',
   caseTreatment: ''
 })
-const emit = defineEmits(['case-info'])
+
+// 响应式表单数据
+const formData = reactive(initFormData())
+const emit = defineEmits(['case-info','function-click'])
 // 定义表单引用，用于校验
 const recordFormRef = ref(null)
 
+// 2. 处理按钮点击，向父组件传递对应的标识
+const handleFuncClick = (actionType) => {
+  emit('function-click', actionType)
+}
 // 1. 获取病例详情的方法
 const fetchData = (id) => {
-  if (!id) return
-  const url = '/fuo-aiads/register/selectCase'
-  
-  // 模拟请求（实际使用时请替换为你的真实 axios.get）
+  if (!id) {
+    // 无ID时清空表单
+    Object.assign(formData, initFormData());
+    emit('case-info', {}); // 清空病例信息传递
+    return;
+  }
+  const url = '/api/v1/register/selectCase'
   axios.get(url, { params: { registerId: id } }).then((res) => {
-    // 这里假设 res.data 是你提供的 data 对象
-    const data = res.data.data || {} 
-
-    // 基础文本字段直接赋值
+    const data = res.data.data || {}
+    // 赋值逻辑保持不变...
     formData.caseChief = data.caseChief || ''
     formData.casePresent = data.casePresent || ''
     formData.casePast = data.casePast || ''
@@ -111,7 +121,6 @@ const fetchData = (id) => {
     formData.caseDiseaseType = data.caseDiseaseType || ''
     formData.caseDiagnostic = data.caseDiagnostic || ''
 
-    // 数组转字符串的辅助函数
     const formatExamArray = (arr) => {
       if (!arr || arr.length === 0) return ''
       return arr.map(item => {
@@ -123,7 +132,7 @@ const fetchData = (id) => {
     formData.casePhysicalExam = formatExamArray(data.casePhysicalExam)
     formData.caseNormalExam = formatExamArray(data.caseNormalExam)
     formData.caseSpecificExam = formatExamArray(data.caseSpecificExam)
-emit('case-info', {...data,registerId:id})
+    emit('case-info', { ...data, registerId: id })
   }).catch((err) => {
     console.error('❌ 请求失败:', err)
   })
@@ -132,7 +141,7 @@ emit('case-info', {...data,registerId:id})
 // 2. 字符串解析回数组的辅助函数（核心新增逻辑）
 const parseExamString = (str) => {
   if (!str || str.trim() === '') return []
-  
+
   return str.split(' | ').map(itemStr => {
     // 匹配格式：名称: 数值单位 (例如 "身高: 176cm")
     // 使用正则提取：冒号前是 itemName，冒号后是数值和单位
@@ -140,11 +149,11 @@ const parseExamString = (str) => {
     if (match) {
       const itemName = match[1].trim()
       const valueAndUnit = match[2].trim()
-      
+
       // 简单提取单位：匹配末尾的字母或特殊单位符号，剩下的作为数值
       // 如果没有字母结尾，则整个作为数值，单位为空
       const unitMatch = valueAndUnit.match(/^(.+?)([a-zA-Z\/%]+)$/)
-      
+
       if (unitMatch) {
         return {
           itemName: itemName,
@@ -216,7 +225,7 @@ const handleSave = () => {
   // 将前端展示用的字符串，转换回后端需要的对象数组
   const submitData = {
     registerId: props.patientInfo.registerId, // 带上主键ID用于后端更新
-    caseId:props.patientInfo.caseId, // 带上病历ID用于后端更新
+    caseId: props.patientInfo.caseId, // 带上病历ID用于后端更新
     patientId: props.patientInfo.patientId,
     caseChief: formData.caseChief,
     casePresent: formData.casePresent,
@@ -232,17 +241,17 @@ const handleSave = () => {
     caseNormalExam: parseExamString(formData.caseNormalExam).length > 0 ? parseExamString(formData.caseNormalExam) : null,
     caseSpecificExam: parseExamString(formData.caseSpecificExam).length > 0 ? parseExamString(formData.caseSpecificExam) : null,
     caseOther: null,
-    patientName:props.patientInfo.patientName,
-    patientGender:props.patientInfo.patientGender,
-    patientAge:props.patientInfo.patientAge || null,
-    patientCareer:props.patientInfo.patientCareer || null,
-    patientAddress:props.patientInfo.patientAddress || null,
+    patientName: props.patientInfo.patientName,
+    patientGender: props.patientInfo.patientGender,
+    patientAge: props.patientInfo.patientAge || null,
+    patientCareer: props.patientInfo.patientCareer || null,
+    patientAddress: props.patientInfo.patientAddress || null,
   }
 
   console.log('💾 准备提交给后端的数据：', submitData)
 
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/fuo-aiads/register/updateCase', {data:submitData}).then((res) => {
+  axios.post('/api/v1/register/updateCase', { data: submitData }).then((res) => {
     console.log('💾 保存成功', res.data)
     ElMessage.success('保存成功')
   }).catch((err) => {
@@ -257,7 +266,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
+  axios.get('/api/v1/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)

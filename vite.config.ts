@@ -29,7 +29,7 @@ export default defineConfig({
       },
       '/api/v1/': {
         //target: 'http://portal.it.sunsheen.cn/api/v1/',
-        target: 'http://192.168.8.10:8000/api/v1/',
+        target: 'http://192.168.5.77:8088/api/v1/',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/v1/, '')
       },

@@ -96,7 +96,7 @@ const operatorOptions = [
 const fetchMetricOptions = async (query = '') => {
   loading.value = true
   try {
-    let res = await axios.get('/fuo-aiads/mainsuit/examItemList', {
+    let res = await axios.get('/api/v1/mainsuit/examItemList', {
       params: {
         isDigital: 1,
         itemName: query // 将用户输入的关键词传给后端

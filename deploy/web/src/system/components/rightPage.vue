@@ -72,14 +72,15 @@ activeTab.value = props.activeButton === 'auxiliaryDiagnosis' ? 'diagnosis' : 't
 const loadData = async () => {
   // 没有病例信息不请求
   if (!props.caseInfo || Object.keys(props.caseInfo).length === 0) {
-    ElMessage.warning('请先选择病例信息');
+    knowledgeGraphResults.value = {}
+    treatmentResults.value = {}
     return;
   }
 
   try {
     if (activeTab.value === 'diagnosis') {
       // 请求辅助诊断接口
-      let res = await axios.post('/fuo-aiads/business/diagnosis', {
+      let res = await axios.post('/api/v1/business/diagnosis', {
         data: props.caseInfo,
       });
       if (res.data.code) {
@@ -88,7 +89,7 @@ const loadData = async () => {
       }
     } else {
       // 请求治疗建议接口
-      let res = await axios.post('/fuo-aiads/business/treatment', {
+      let res = await axios.post('/api/v1/business/treatment', {
         data: props.caseInfo,
       });
       if (res.data.code) {
@@ -107,6 +108,20 @@ const switchTab = (tab) => {
   activeTab.value = tab;
   loadData();
 };
+
+// 监听 activeButton 变化 → 自动切换标签
+watch(
+  () => props.activeButton,
+  (newVal) => {
+    // 父组件切换按钮时，自动同步切换
+    if (newVal === 'auxiliaryDiagnosis') {
+      activeTab.value = 'diagnosis';
+    } else {
+      activeTab.value = 'treatment';
+    }
+    loadData(); // 切换后重新加载数据
+  }
+);
 
 // 监听：标签变化 → 重新请求
 watch(activeTab, () => {

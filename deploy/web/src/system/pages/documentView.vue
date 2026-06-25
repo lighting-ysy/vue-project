@@ -28,7 +28,7 @@
         <el-col :span="24" v-for="(item, index) in formItems" :key="index">
           <!-- 普通单行/多行文本输入 -->
           <el-form-item :label="item.label" v-if="item.type === 'input'">
-            <el-input v-model="formData[item.prop]" type="textarea" :rows="1" :placeholder="`请输入${item.label}`" />
+            <el-input v-model="formData[item.prop]" type="textarea" :rows="1" autosize :placeholder="`请输入${item.label}`" />
           </el-form-item>
 
           <!-- 单一下拉框 -->
@@ -132,18 +132,25 @@ const fetchData = () => {
     return;
   }
 
-  // ✅ 页面正中央居中加载，非全屏，轻量级弹窗
+  // ✅ 中央进度条加载
   const loadingInstance = ElLoading.service({
-    target: document.body,     // 挂载到页面
-    fullscreen: false,         // 关闭全屏
+    target: document.body,
+    fullscreen: false,
     lock: true,
-    text: '正在提取...',
-    background: 'rgba(255, 255, 255, 0.8)',
-    // 核心：让它居中显示
-    customClass: 'center-loading'
+    text: '正在提取数据 0%',
+    background: 'rgba(255, 255, 255, 0.85)',
+    customClass: 'center-loading progress-loading'
   })
 
-  const url = '/fuo-aiads/business/extract';
+  // 模拟进度条
+  let progress = 0
+  const progressTimer = setInterval(() => {
+    progress += 5
+    if (progress > 95) progress = 95
+    loadingInstance.setText(`正在提取数据 ${progress}%`)
+  }, 1000)
+
+  const url = '/api/v1/business/extract';
   const reader = new FileReader();
   
   reader.onload = async (e) => {
@@ -190,11 +197,16 @@ const fetchData = () => {
       console.error('❌ 请求失败:', err);
       ElMessage.error('提取失败');
     } finally {
-      loadingInstance.close()
+      clearInterval(progressTimer)
+      loadingInstance.setText('正在提取数据 100%')
+      setTimeout(() => {
+        loadingInstance.close()
+      }, 200)
     }
   };
   
   reader.onerror = () => {
+    clearInterval(progressTimer)
     loadingInstance.close()
     ElMessage.error('文件读取失败');
   };
@@ -250,7 +262,7 @@ const handleSave = async () => {
   let responseId = {}
   let newPatientForm = {patientName: formData.patientName, patientGender: formData.patientGender, patientAge: Number(formData.patientAge)}
   console.log('开始保存')
-  let res = await axios.post('/fuo-aiads/register/createRegistedPatient', { data: newPatientForm })
+  let res = await axios.post('/api/v1/register/createRegistedPatient', { data: newPatientForm })
   if(res.data){
     responseId = res.data.data
     console.log('保存成功', responseId)
@@ -286,7 +298,7 @@ const update = (responseId)=>{
   }
   console.log('💾 准备提交给后端的数据：', submitData)
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/fuo-aiads/register/updateCase', {data:submitData}).then((res) => {
+  axios.post('/api/v1/register/updateCase', {data:submitData}).then((res) => {
     ElMessage.success('保存成功',res.data)
   }).catch((err) => {
     console.error('❌ 保存失败:', err)
@@ -301,7 +313,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
+  axios.get('/api/v1/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)
@@ -555,14 +567,17 @@ onMounted(( )=>{
   gap: 10px;
   width: 100%;
 }
-.center-loading {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 180px !important;
-  height: 120px !important;
-  border-radius: 8px !important;
-  z-index: 9999 !important;
+/* 进度条加载样式 */
+:deep(.progress-loading .el-loading-text) {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #409eff;
+}
+:deep(.progress-loading .el-loading-spin) {
+  margin-bottom: 6px;
+}
+:deep(.progress-loading .el-loading-spin svg) {
+  animation: rotating 1.2s linear infinite;
+  color: #409eff;
 }
 </style>

@@ -107,7 +107,7 @@ const fetchData = (id) => {
     emit('case-info', {}); // 清空病例信息传递
     return;
   }
-  const url = '/fuo-aiads/register/selectCase'
+  const url = '/api/v1/register/selectCase'
   axios.get(url, { params: { registerId: id } }).then((res) => {
     const data = res.data.data || {}
     // 赋值逻辑保持不变...
@@ -251,7 +251,7 @@ const handleSave = () => {
   console.log('💾 准备提交给后端的数据：', submitData)
 
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/fuo-aiads/register/updateCase', { data: submitData }).then((res) => {
+  axios.post('/api/v1/register/updateCase', { data: submitData }).then((res) => {
     console.log('💾 保存成功', res.data)
     ElMessage.success('保存成功')
   }).catch((err) => {
@@ -266,7 +266,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
+  axios.get('/api/v1/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)

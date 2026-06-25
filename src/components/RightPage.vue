@@ -80,7 +80,7 @@ const loadData = async () => {
   try {
     if (activeTab.value === 'diagnosis') {
       // 请求辅助诊断接口
-      let res = await axios.post('/fuo-aiads/business/diagnosis', {
+      let res = await axios.post('/api/v1/business/diagnosis', {
         data: props.caseInfo,
       });
       if (res.data.code) {
@@ -89,7 +89,7 @@ const loadData = async () => {
       }
     } else {
       // 请求治疗建议接口
-      let res = await axios.post('/fuo-aiads/business/treatment', {
+      let res = await axios.post('/api/v1/business/treatment', {
         data: props.caseInfo,
       });
       if (res.data.code) {

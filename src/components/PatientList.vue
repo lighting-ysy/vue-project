@@ -285,7 +285,7 @@ const debounce = (fn, delay = 300) => {
 
 // 弹窗搜索患者
 const featchPatientList = async (keyword = '') => {
-  const url = '/fuo-aiads/mainsuit/patientList'
+  const url = '/api/v1/mainsuit/patientList'
   const params = { patientName: keyword.trim() }
   try {
     const res = await axios.get(url, { params })
@@ -300,7 +300,7 @@ const debounceSearch = debounce(featchPatientList, 300)
 
 // 获取病例列表
 const fetchData = async (multiParam) => {
-  const url = '/fuo-aiads/mainsuit/selectCaseList'
+  const url = '/api/v1/mainsuit/selectCaseList'
   const params = multiParam || {
     pageNum: currentPage.value,
     pageSize: pageSize.value,
@@ -344,7 +344,7 @@ const submitAddVisit = async () => {
     if (!addVisitForm.value.newPatientGender.trim()) return ElMessage.warning('请输入患者性别')
 
     try {
-      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+      await axios.post('/api/v1/mainsuit/createVisit', {
         data: {
           patientName: addVisitForm.value.newPatientName,
           patientGender: addVisitForm.value.newPatientGender,
@@ -360,7 +360,7 @@ const submitAddVisit = async () => {
   } else {
     if (!addVisitForm.value.bindPatientId) return ElMessage.warning('请选择要绑定的患者')
     try {
-      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+      await axios.post('/api/v1/mainsuit/createVisit', {
         data: {
           patientId: addVisitForm.value.bindPatientId
         }

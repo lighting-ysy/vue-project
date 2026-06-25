@@ -150,7 +150,7 @@ const fetchData = () => {
     loadingInstance.setText(`正在提取数据 ${progress}%`)
   }, 1000)
 
-  const url = '/fuo-aiads/business/extract';
+  const url = '/api/v1/business/extract';
   const reader = new FileReader();
   
   reader.onload = async (e) => {
@@ -262,7 +262,7 @@ const handleSave = async () => {
   let responseId = {}
   let newPatientForm = {patientName: formData.patientName, patientGender: formData.patientGender, patientAge: Number(formData.patientAge)}
   console.log('开始保存')
-  let res = await axios.post('/fuo-aiads/register/createRegistedPatient', { data: newPatientForm })
+  let res = await axios.post('/api/v1/register/createRegistedPatient', { data: newPatientForm })
   if(res.data){
     responseId = res.data.data
     console.log('保存成功', responseId)
@@ -298,7 +298,7 @@ const update = (responseId)=>{
   }
   console.log('💾 准备提交给后端的数据：', submitData)
   // 发送 POST 请求保存（假设后端保存接口为 /register/saveCase）
-  axios.post('/fuo-aiads/register/updateCase', {data:submitData}).then((res) => {
+  axios.post('/api/v1/register/updateCase', {data:submitData}).then((res) => {
     ElMessage.success('保存成功',res.data)
   }).catch((err) => {
     console.error('❌ 保存失败:', err)
@@ -313,7 +313,7 @@ const handleDelete = () => {
     ElMessage.warning('请先选择患者')
     return
   }
-  axios.get('/fuo-aiads/register/deleteRegisterLogically', {
+  axios.get('/api/v1/register/deleteRegisterLogically', {
     params: { registerId: props.patientInfo.registerId }
   }).then((res) => {
     console.log('删除成功', res.data)

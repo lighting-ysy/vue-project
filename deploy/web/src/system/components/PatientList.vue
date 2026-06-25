@@ -25,33 +25,46 @@
         >只显示查询内容</el-radio>
       </el-radio-group>
 
-      <el-button size="small" @click="toggleCollapse">
-        {{ isCollapseOpen ? '收起查询' : '更多查询' }}
+      <el-button size="small" @click="openFilterDialog">
+        更多查询
       </el-button>
     </div>
-<input 
+
+    <input 
       ref="fileInputRef" 
       type="file" 
       style="display: none" 
       accept=".pdf,.doc,.docx,.txt" 
       @change="handleFileChange"
     />
-    <!-- 折叠面板区域 -->
-    <el-collapse v-model="activeCollapse" class="custom-collapse" v-if="isCollapseOpen">
-      <el-collapse-item name="filters">
-        <data-info v-model="patientInfo" />
-        <data-tag v-model="selectedSymptoms" />
-        <data-item v-model="ruleConfig" />
-        <el-button type="primary" @click="printForm">完成查询</el-button>
-      </el-collapse-item>
-    </el-collapse>
 
-    <!-- 患者与就诊记录列表 -->
-    <div class="patient-list">
+    <!-- 更多查询弹窗 -->
+    <el-dialog
+      v-model="filterDialogVisible"
+      title="高级查询"
+      width="50%"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <data-info v-model="patientInfo" />
+      <data-tag v-model="selectedSymptoms" />
+      <data-item v-model="ruleConfig" />
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="filterDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="printForm">完成查询</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 患者与就诊记录列表 + 空白点击 -->
+    <div class="patient-list" @click="handleBlankClick">
       <div
         v-for="patient in patients"
         :key="patient.patientId"
         class="patient-group"
+        @click.stop
       >
         <div
           class="patient-card"
@@ -69,7 +82,6 @@
             v-if="activeId === patient.patientId && patient.registerList && patient.registerList.length > 0"
             class="register-list"
           >
-            <!-- 这里根据 queryOnly 自动过滤 isSelected -->
             <div
               v-for="(record, index) in filterRegisterList(patient.registerList)"
               :key="record.registerId || index"
@@ -166,11 +178,11 @@ import DataTag from './DataTag.vue'
 import DataInfo from './DataInfo.vue'
 import 'element-plus/es/components/message/style/css'
 
-// 折叠面板
-const activeCollapse = ref([])
-const isCollapseOpen = computed(() => activeCollapse.value.includes('filters'))
-const toggleCollapse = () => {
-  activeCollapse.value = isCollapseOpen.value ? [] : ['filters']
+// 高级查询弹窗
+const filterDialogVisible = ref(false)
+// 打开高级查询弹窗
+const openFilterDialog = () => {
+  filterDialogVisible.value = true
 }
 
 const patientInfo = ref({})
@@ -194,18 +206,21 @@ const toggleQueryOnly = () => {
   handleSearch()
 }
 
-// ===================== 核心过滤方法 =====================
-// ===================== 核心过滤方法 =====================
-const filterRegisterList = (list) => {
-  // 如果列表为空，直接返回空数组
-  if (!list) return []
+// 点击列表空白区域
+const handleBlankClick = () => {
+  console.log('点击了空白')
+  emit('blank-clicked',false)
+  // 这里可以额外写逻辑：比如清空选中
+  activeId.value = ''
+  selectedRegisterId.value = ''
+}
 
-  // 如果开启了“只显示查询内容” (值为 '1')
+// 核心过滤方法
+const filterRegisterList = (list) => {
+  if (!list) return []
   if (queryOnly.value === '1') {
     return list.filter(item => item.isSelected === true)
   }
-  
-  // 如果未开启，则返回全部列表
   return list
 }
 
@@ -218,33 +233,29 @@ const addVisitForm = ref({
 
 const printForm = () => {
   console.log(ruleConfig.value)
-  // 1. 验证 ruleConfig.value
-  // some() 方法会遍历数组，只要有一项满足条件（value1为null或""）就返回 true
   const hasEmptyValue1 = ruleConfig.value.some(item => {
-    // 检查 value1 是否为 null 或 空字符串
     return item.value1 === null || item.value1 === '';
   });
 
-  // 2. 如果发现空值，清空整个列表
   if (hasEmptyValue1) {
-    ruleConfig.value = []; // 重置列表
-    // 可选：给用户提示
+    ruleConfig.value = [];
     ElMessage.warning('检测到数值1有空值，已清空检查结果列表');
   }
 
-  // 3. 继续执行后续的查询逻辑
   let multiParam = {
     pageSize: pageSize.value,
     pageNum: currentPage.value,
     patientInfo: patientInfo.value,
     symptomList: selectedSymptoms.value,
-    examList: ruleConfig.value, // 此时这里可能是新数据，也可能是 []
+    examList: ruleConfig.value,
   }
   
   fetchData(multiParam)
+  // 关闭弹窗
+  filterDialogVisible.value = false
 }
 
-const emit = defineEmits(['select', 'file-selected'])
+const emit = defineEmits(['select', 'file-selected','blank-clicked'])
 
 // 分页与搜索
 const handleSizeChange = (newSize) => {
@@ -274,12 +285,13 @@ const debounce = (fn, delay = 300) => {
 
 // 弹窗搜索患者
 const featchPatientList = async (keyword = '') => {
-  const url = '/fuo-aiads/mainsuit/patientList'
+  const url = '/api/v1/mainsuit/patientList'
   const params = { patientName: keyword.trim() }
   try {
     const res = await axios.get(url, { params })
     addPatients.value = res.data.data || []
-  } catch (err) {
+  } catch (err)
+  {
     console.error('❌ 患者搜索失败:', err)
     ElMessage.error('患者搜索失败')
   }
@@ -288,7 +300,7 @@ const debounceSearch = debounce(featchPatientList, 300)
 
 // 获取病例列表
 const fetchData = async (multiParam) => {
-  const url = '/fuo-aiads/mainsuit/selectCaseList'
+  const url = '/api/v1/mainsuit/selectCaseList'
   const params = multiParam || {
     pageNum: currentPage.value,
     pageSize: pageSize.value,
@@ -332,7 +344,7 @@ const submitAddVisit = async () => {
     if (!addVisitForm.value.newPatientGender.trim()) return ElMessage.warning('请输入患者性别')
 
     try {
-      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+      await axios.post('/api/v1/mainsuit/createVisit', {
         data: {
           patientName: addVisitForm.value.newPatientName,
           patientGender: addVisitForm.value.newPatientGender,
@@ -348,7 +360,7 @@ const submitAddVisit = async () => {
   } else {
     if (!addVisitForm.value.bindPatientId) return ElMessage.warning('请选择要绑定的患者')
     try {
-      await axios.post('/fuo-aiads/mainsuit/createVisit', {
+      await axios.post('/api/v1/mainsuit/createVisit', {
         data: {
           patientId: addVisitForm.value.bindPatientId
         }
@@ -410,22 +422,6 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.custom-collapse {
-  border-top: none;
-  border-bottom: none;
-  margin-bottom: 15px;
-  max-height: 360px;
-  overflow-y: auto;
-}
-.custom-collapse :deep(.el-collapse-item__header),
-.custom-collapse :deep(.el-collapse-item__wrap) {
-  border-bottom: none;
-  background-color: transparent;
-}
-.custom-collapse :deep(.el-collapse-item__content) {
-  padding-bottom: 10px;
 }
 
 .panel-title {
